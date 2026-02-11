@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AttendPro | GitHub Cloud System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        .scan-line {
+            height: 3px;
+            background: #10b981;
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+            box-shadow: 0 0 15px #10b981;
+            animation: scan 2s linear infinite;
+        }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans text-slate-900">
+
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <div class="bg-emerald-600 p-1.5 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <span class="font-bold text-xl tracking-tight text-slate-800">Attendance</span>
+        </div>
+        <div class="flex gap-4">
+            <button id="navAdminBtn" onclick="showAdminLogin()" class="text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors">Admin Portal</button>
+            <button id="navLogoutBtn" onclick="logoutAdmin()" class="hidden text-sm font-semibold text-red-500 hover:text-red-700 transition-colors">Logout</button>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+
+        <!-- STUDENT SECTION: START -->
+        <div id="view-student-start" class="fade-in max-w-md mx-auto mt-10">
+            <div class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200 border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Student Check-in</h2>
+                <p class="text-slate-500 mb-8">Enter enrollment ID to save attendance to GitHub repository.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Enrollment Number</label>
+                        <input type="text" id="enrollInput" placeholder="e.g. 104726006398" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 px-6 text-lg font-mono focus:border-emerald-500 outline-none transition-all">
+                        <p id="enrollError" class="hidden text-red-500 text-xs mt-2 font-bold">Registration not found.</p>
+                    </div>
+                    <button onclick="verifyEnrollment()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">Verify & Open Camera</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STUDENT SECTION: SCAN -->
+        <div id="view-student-scan" class="hidden fade-in max-w-md mx-auto mt-10">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="displayName" class="font-bold text-slate-800"></h3>
+                    <button onclick="location.reload()" class="text-xs text-slate-400 underline">Cancel</button>
+                </div>
+                <div class="relative rounded-2xl overflow-hidden aspect-square bg-black mb-6 border-4 border-slate-50">
+                    <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+                    <canvas id="captureCanvas" class="hidden"></canvas>
+                    <div id="scannerOverlay" class="hidden">
+                        <div class="scan-line"></div>
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <span class="bg-emerald-500 text-white text-[10px] font-black uppercase px-2 py-1 rounded tracking-widest">Scanning Profile</span>
+                        </div>
+                    </div>
+                </div>
+                <button id="markBtn" onclick="markAttendance()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all">
+                    Mark Attendance
+                </button>
+            </div>
+        </div>
+
+        <!-- STUDENT SECTION: SUCCESS -->
+        <div id="view-student-success" class="hidden fade-in max-w-md mx-auto mt-10 text-center">
+            <div class="bg-white rounded-3xl p-10 shadow-xl border border-emerald-100">
+                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-1">GitHub Updated!</h2>
+                <p id="successMsg" class="text-slate-500 mb-8"></p>
+                <button onclick="location.reload()" class="bg-slate-100 px-8 py-2 rounded-full text-slate-600 font-bold">Exit</button>
+            </div>
+        </div>
+
+        <!-- ADMIN LOGIN -->
+        <div id="view-admin-login" class="hidden fade-in max-w-md mx-auto mt-10">
+            <div class="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Admin GitHub Portal</h2>
+                    <p class="text-slate-500 font-medium">Remote Repo Access</p>
+                </div>
+                <div class="space-y-4">
+                    <input type="email" id="adminEmail" placeholder="xxxxxxx@xxx.com" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3 px-4 outline-none focus:border-emerald-500">
+                    <input type="password" id="adminPass" placeholder="••••••••" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3 px-4 outline-none focus:border-emerald-500">
+                    <button onclick="loginAdmin()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg">Login to Dashboard</button>
+                    <button onclick="location.reload()" class="w-full text-slate-400 text-sm">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN DASHBOARD -->
+        <div id="view-admin-dashboard" class="hidden fade-in space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800 tracking-tight">GitHub Database</h2>
+                    <p class="text-sm text-slate-500">All records are stored as JSON files in your repository.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="toggleConfig()" class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-100">GitHub Settings</button>
+                    <button onclick="loadDashboard()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200">Refresh Records</button>
+                </div>
+            </div>
+
+            <!-- GitHub Configuration Panel -->
+            <div id="configPanel" class="hidden bg-slate-800 text-white p-6 rounded-3xl shadow-lg border border-slate-700 fade-in">
+                <h3 class="font-bold mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
+                    GitHub Connection Settings
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <label class="block text-slate-400 mb-1">GitHub Username (Owner)</label>
+                        <input type="text" id="ghUsername" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 outline-none focus:border-emerald-500" placeholder="e.g. your-github-username">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Personal Access Token</label>
+                        <input type="password" id="ghToken" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 outline-none focus:border-emerald-500" placeholder="ghp_xxxx">
+                    </div>
+                    <div class="md:col-span-2 flex flex-wrap gap-2 mt-2">
+                        <button onclick="saveGHConfig()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition-all flex-1">Update Settings</button>
+                        <button onclick="resetToDefaults()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg transition-all">Reset to Defaults</button>
+                    </div>
+                    <div class="md:col-span-2">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Current Repo Target: arcomputereducation</p>
+                        <p class="text-[10px] text-slate-400 mt-1 italic leading-tight bg-slate-900/50 p-2 rounded">
+                            <span class="text-emerald-400 font-bold">FIX FOR ACCESS DENIED:</span><br>
+                            1. Go to GitHub Settings > Developer Settings > Personal access tokens.<br>
+                            2. Edit your token and ensure it has <span class="text-emerald-400 font-bold">'repo'</span> scope (for Classic tokens) or <span class="text-emerald-400 font-bold">'Contents: Read and write'</span> (for Fine-grained tokens).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="historyContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+            <div id="emptyState" class="hidden text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                <p class="text-slate-400 font-medium">No records found. Check GitHub Username and Token.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CORE LOGIC ---
+        const studentsList = {
+            "104726006398": "Shahina Parbin",
+            "104726006397": "JESHMINA BEGUM"
+        };
+
+        const adminCreds = {
+            email: "ashinur@gmail.com",
+            pass: "Ashinur@123"
+        };
+
+        // GitHub Config Default Constants
+        const DEFAULT_TOKEN = "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";
+        const DEFAULT_OWNER = "ashinur783344-glitch"; 
+
+        let GH_CONFIG = {
+            token: localStorage.getItem('gh_token') || DEFAULT_TOKEN,
+            owner: localStorage.getItem('gh_owner') || DEFAULT_OWNER, 
+            repo: "arcomputereducation", // CORRECTED REPOSITORY NAME
+            path: "attendance_data"
+        };
+
+        let stream = null;
+        let currentStudent = null;
+
+        // UI Toggler
+        window.showView = (viewId) => {
+            ['view-student-start', 'view-student-scan', 'view-student-success', 'view-admin-login', 'view-admin-dashboard'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+            document.getElementById('navAdminBtn').classList.toggle('hidden', viewId === 'view-admin-dashboard' || viewId === 'view-admin-login');
+            document.getElementById('navLogoutBtn').classList.toggle('hidden', viewId !== 'view-admin-dashboard');
+        };
+
+        window.toggleConfig = () => {
+            const panel = document.getElementById('configPanel');
+            panel.classList.toggle('hidden');
+            document.getElementById('ghUsername').value = GH_CONFIG.owner;
+            document.getElementById('ghToken').value = GH_CONFIG.token;
+        };
+
+        window.saveGHConfig = () => {
+            const owner = document.getElementById('ghUsername').value.trim();
+            const token = document.getElementById('ghToken').value.trim();
+            
+            if(!owner || !token) return alert("Please enter both username and token.");
+            
+            GH_CONFIG.owner = owner;
+            GH_CONFIG.token = token;
+            
+            localStorage.setItem('gh_owner', owner);
+            localStorage.setItem('gh_token', token);
+            
+            alert("Connection Updated! Testing connection...");
+            document.getElementById('configPanel').classList.add('hidden');
+            loadDashboard();
+        };
+
+        window.resetToDefaults = () => {
+            if (confirm("Reset connection settings to hardcoded defaults?")) {
+                localStorage.removeItem('gh_owner');
+                localStorage.removeItem('gh_token');
+                GH_CONFIG.owner = DEFAULT_OWNER;
+                GH_CONFIG.token = DEFAULT_TOKEN;
+                document.getElementById('ghUsername').value = GH_CONFIG.owner;
+                document.getElementById('ghToken').value = GH_CONFIG.token;
+                alert("Settings reset! Testing defaults...");
+                loadDashboard();
+            }
+        };
+
+        // STUDENT LOGIC
+        window.verifyEnrollment = () => {
+            const input = document.getElementById('enrollInput').value.trim();
+            const error = document.getElementById('enrollError');
+            if (studentsList[input]) {
+                currentStudent = { id: input, name: studentsList[input] };
+                error.classList.add('hidden');
+                startCamera();
+            } else {
+                error.classList.remove('hidden');
+            }
+        };
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('webcam').srcObject = stream;
+                document.getElementById('displayName').innerText = currentStudent.name;
+                showView('view-student-scan');
+            } catch (err) {
+                alert("Camera Access Required.");
+            }
+        }
+
+        window.markAttendance = async () => {
+            if (!GH_CONFIG.token || !GH_CONFIG.owner) {
+                alert("GitHub Connection not ready. Admin must set Username in Portal.");
+                return;
+            }
+
+            const overlay = document.getElementById('scannerOverlay');
+            const btn = document.getElementById('markBtn');
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('captureCanvas');
+
+            overlay.classList.remove('hidden');
+            btn.disabled = true;
+            btn.innerText = "Saving to GitHub...";
+
+            setTimeout(async () => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const imageData = canvas.toDataURL('image/jpeg', 0.4);
+
+                const timestamp = Date.now();
+                const record = {
+                    studentId: currentStudent.id,
+                    name: currentStudent.name,
+                    photo: imageData,
+                    timeString: new Date().toLocaleString()
+                };
+
+                const fileName = `${currentStudent.id}_${timestamp}.json`;
+                const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}/${fileName}`;
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${GH_CONFIG.token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: `Attendance: ${currentStudent.name}`,
+                            content: btoa(unescape(encodeURIComponent(JSON.stringify(record))))
+                        })
+                    });
+
+                    if (response.ok) {
+                        document.getElementById('successMsg').innerText = `Success! Record for ${currentStudent.name} saved to GitHub.`;
+                        if(stream) stream.getTracks().forEach(t => t.stop());
+                        showView('view-student-success');
+                    } else {
+                        const errData = await response.json();
+                        let msg = errData.message || "Unknown error";
+                        if (response.status === 404) {
+                            msg = "Repository '" + GH_CONFIG.repo + "' not found under user '" + GH_CONFIG.owner + "'. Check repo name.";
+                        } else if (response.status === 401) {
+                            msg = "Token is invalid.";
+                        } else if (response.status === 403) {
+                            msg = "Access Denied. FIX: Go to GitHub token settings and grant 'Contents: Write' permission for this repo.";
+                        }
+                        throw new Error(msg);
+                    }
+                } catch (e) {
+                    alert("Upload Error: " + e.message);
+                    btn.disabled = false;
+                    btn.innerText = "Mark Attendance";
+                }
+            }, 2000);
+        };
+
+        // ADMIN LOGIC
+        window.showAdminLogin = () => showView('view-admin-login');
+
+        window.loginAdmin = () => {
+            const email = document.getElementById('adminEmail').value;
+            const pass = document.getElementById('adminPass').value;
+            if (email === adminCreds.email && pass === adminCreds.pass) {
+                loadDashboard();
+            } else {
+                alert("Invalid Credentials");
+            }
+        };
+
+        async function loadDashboard() {
+            showView('view-admin-dashboard');
+            const container = document.getElementById('historyContainer');
+            const empty = document.getElementById('emptyState');
+
+            if(!GH_CONFIG.token || !GH_CONFIG.owner) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                document.getElementById('configPanel').classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = '<p class="text-center col-span-full py-10 animate-pulse">Connecting to GitHub...</p>';
+
+            const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}`;
+
+            try {
+                const response = await fetch(url, {
+                    headers: { 
+                        'Authorization': `Bearer ${GH_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if(response.status === 404) throw new Error("Database folder not found. No records yet?");
+                    if(response.status === 403) throw new Error("Access Denied (403). Your token needs 'Contents: Read' permission.");
+                    throw new Error("GitHub connection error (" + response.status + ")");
+                }
+
+                const files = await response.json();
+                container.innerHTML = '';
+                
+                if (files.length === 0 || !Array.isArray(files)) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+                files.reverse();
+
+                for (const file of files) {
+                    try {
+                        const res = await fetch(file.download_url);
+                        const record = await res.json();
+
+                        const card = document.createElement('div');
+                        card.className = "bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 group relative fade-in";
+                        card.innerHTML = `
+                            <div class="aspect-square relative bg-slate-50">
+                                <img src="${record.photo}" class="w-full h-full object-cover">
+                                <button onclick="deleteGHFile('${file.path}', '${file.sha}')" class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-bold text-slate-800 truncate">${record.name}</h4>
+                                <p class="text-[10px] text-slate-400 font-mono">ID: ${record.studentId}</p>
+                                <div class="mt-2 text-[10px] text-slate-500 font-medium">${record.timeString}</div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    } catch (e) { console.error("Error loading file:", file.name); }
+                }
+            } catch (err) {
+                container.innerHTML = `<div class="col-span-full text-center py-10 bg-red-50 text-red-600 rounded-3xl p-6">
+                    <p class="font-bold">Connection Issue</p>
+                    <p class="text-sm">${err.message}</p>
+                    <button onclick="toggleConfig()" class="mt-4 text-xs underline font-bold">Adjust GitHub Settings</button>
+                </div>`;
+                empty.classList.add('hidden');
+                console.error(err);
+            }
+        }
+
+        window.deleteGHFile = async (path, sha) => {
+            if (!confirm("Delete this record permanently?")) return;
+
+            const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${GH_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: "Delete attendance record",
+                        sha: sha
+                    })
+                });
+
+                if (response.ok) {
+                    loadDashboard();
+                } else {
+                    alert("Delete failed. Ensure token has 'delete' or 'write' permissions.");
+                }
+            } catch (err) {
+                alert("Error deleting: " + err.message);
+            }
+        };
+
+        window.logoutAdmin = () => location.reload();
+    </script>
+</body>
+</html>
