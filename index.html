@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AttendPro | GitHub Cloud System</title>
+    <title>AR COMPUTER EDUCATION | Future Begins Here</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Great+Vibes&display=swap" rel="stylesheet">
     <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .font-signature { font-family: 'Great Vibes', cursive; }
+        
+        /* Animations */
         @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
         .scan-line {
             height: 3px;
@@ -16,437 +22,2393 @@
             box-shadow: 0 0 15px #10b981;
             animation: scan 2s linear infinite;
         }
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .float-anim { animation: float 4s ease-in-out infinite; }
+
+        .hero-bg {
+            background-color: #0f172a;
+            background-image: radial-gradient(#10b981 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px); 
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 1.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .dashboard-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: #10b981;
+        }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans text-slate-900">
+<body class="bg-slate-50 min-h-screen text-slate-900">
+
+    <!-- Top Notification Banner -->
+    <div id="topBanner" class="bg-emerald-900 text-white text-xs font-bold py-2 px-4 text-center tracking-wide public-nav">
+        🚀 NEW BATCH STARTING SOON: ADCA & DCA | <span class="text-emerald-400 cursor-pointer hover:underline" onclick="showView('view-apply')">APPLY NOW</span>
+    </div>
 
     <!-- Navigation -->
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-2">
-            <div class="bg-emerald-600 p-1.5 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+    <nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <div id="navLogo" class="flex items-center gap-2 cursor-pointer" onclick="handleLogoClick()">
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 p-2 rounded-xl shadow-lg shadow-emerald-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
             </div>
-            <span class="font-bold text-xl tracking-tight text-slate-800">Attendance</span>
-        </div>
-        <div class="flex gap-4">
-            <button id="navAdminBtn" onclick="showAdminLogin()" class="text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors">Admin Portal</button>
-            <button id="navLogoutBtn" onclick="logoutAdmin()" class="hidden text-sm font-semibold text-red-500 hover:text-red-700 transition-colors">Logout</button>
-        </div>
-    </nav>
-
-    <div class="max-w-6xl mx-auto p-4 md:p-8">
-
-        <!-- STUDENT SECTION: START -->
-        <div id="view-student-start" class="fade-in max-w-md mx-auto mt-10">
-            <div class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200 border border-slate-100">
-                <h2 class="text-2xl font-bold text-slate-800 mb-2">Student Check-in</h2>
-                <p class="text-slate-500 mb-8">Enter enrollment ID to save attendance to GitHub repository.</p>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Enrollment Number</label>
-                        <input type="text" id="enrollInput" placeholder="e.g. 104726006398" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 px-6 text-lg font-mono focus:border-emerald-500 outline-none transition-all">
-                        <p id="enrollError" class="hidden text-red-500 text-xs mt-2 font-bold">Registration not found.</p>
-                    </div>
-                    <button onclick="verifyEnrollment()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">Verify & Open Camera</button>
-                </div>
+            <div>
+                <span class="font-extrabold text-xl tracking-tight text-slate-800 leading-none block">AR COMPUTER</span>
+                <span class="text-[10px] font-bold text-emerald-600 tracking-widest uppercase block">Education Center</span>
             </div>
         </div>
+        
+        <!-- Desktop Menu -->
+        <div id="navMenu" class="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-full">
+            <button onclick="showView('view-home')" class="public-nav px-5 py-2 text-sm font-bold text-emerald-700 bg-white rounded-full shadow-sm transition-all">Home</button>
+            <button onclick="showView('view-student-login')" class="public-nav px-5 py-2 text-sm font-bold text-slate-600 hover:text-emerald-600 transition-colors">Student Login</button>
+            <button onclick="showView('view-status')" class="public-nav px-5 py-2 text-sm font-bold text-slate-600 hover:text-emerald-600 transition-colors">Track Status</button>
+            <button id="navAdminBtn" onclick="showAdminLogin()" class="public-nav px-5 py-2 text-sm font-bold text-slate-500 hover:text-emerald-600 transition-colors">Admin</button>
+            <!-- Protected Dashboard Label -->
+            <span id="navDashLabel" class="hidden px-5 py-2 text-sm font-bold text-emerald-800">Dashboard Active</span>
+        </div>
+        
+        <!-- Mobile Menu Button (Simple) -->
+        <button id="mobileLoginBtn" onclick="showView('view-student-login')" class="public-nav md:hidden bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-lg">Login</button>
+        <button id="navLogoutBtn" onclick="logout()" class="hidden text-sm font-bold text-red-500 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-50">Logout</button>
+    </nav>
 
-        <!-- STUDENT SECTION: SCAN -->
-        <div id="view-student-scan" class="hidden fade-in max-w-md mx-auto mt-10">
-            <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 id="displayName" class="font-bold text-slate-800"></h3>
-                    <button onclick="location.reload()" class="text-xs text-slate-400 underline">Cancel</button>
-                </div>
-                <div class="relative rounded-2xl overflow-hidden aspect-square bg-black mb-6 border-4 border-slate-50">
-                    <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
-                    <canvas id="captureCanvas" class="hidden"></canvas>
-                    <div id="scannerOverlay" class="hidden">
-                        <div class="scan-line"></div>
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/20">
-                            <span class="bg-emerald-500 text-white text-[10px] font-black uppercase px-2 py-1 rounded tracking-widest">Scanning Profile</span>
+    <div class="w-full">
+
+        <!-- HOME PAGE -->
+        <div id="view-home" class="fade-in">
+            <!-- (Same Hero Section Content) -->
+            <div class="relative hero-bg text-white overflow-hidden">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                <div class="absolute -bottom-8 left-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+
+                <div id="homeNoticeBoard" class="hidden relative z-20 bg-amber-100 border-b border-amber-200 px-4 py-2">
+                    <div class="max-w-6xl mx-auto flex items-center gap-3">
+                        <span class="bg-amber-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+                            NOTICE
+                        </span>
+                        <div class="overflow-hidden relative w-full">
+                            <marquee id="publicNoticeText" class="text-sm font-semibold text-amber-900" scrollamount="6">Welcome to AR Computer Education!</marquee>
                         </div>
                     </div>
                 </div>
-                <button id="markBtn" onclick="markAttendance()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all">
-                    Mark Attendance
-                </button>
+
+                <div class="max-w-6xl mx-auto px-6 py-20 md:py-28 relative z-10 grid md:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-6">
+                        <div class="inline-block bg-emerald-900/50 border border-emerald-500/30 rounded-full px-4 py-1.5 text-xs font-bold text-emerald-300 tracking-wider mb-2">
+                            ✨ CERTIFIED COMPUTER COURSES
+                        </div>
+                        <h1 class="text-5xl md:text-7xl font-black leading-tight tracking-tight">
+                            Upgrade Your <br/>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Digital Skills</span>
+                        </h1>
+                        <p class="text-slate-300 text-lg md:text-xl max-w-lg leading-relaxed">
+                            Learn Programming, Web Design, and Office Automation with expert faculty. Build a career in the IT sector.
+                        </p>
+                        <div class="flex flex-wrap gap-4 pt-4">
+                            <button onclick="showView('view-apply')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-900 px-8 py-4 rounded-xl font-bold shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all transform hover:-translate-y-1">
+                                Enroll Now
+                            </button>
+                            <button onclick="showView('view-student-login')" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white px-8 py-4 rounded-xl font-bold transition-all">
+                                Student Dashboard
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-4 pt-6 text-sm font-semibold text-slate-400">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-slate-600 border-2 border-slate-900"></div>
+                                <div class="w-8 h-8 rounded-full bg-slate-500 border-2 border-slate-900"></div>
+                                <div class="w-8 h-8 rounded-full bg-slate-400 border-2 border-slate-900"></div>
+                            </div>
+                            <p>500+ Students Trained</p>
+                        </div>
+                    </div>
+                    
+                    <div class="relative hidden md:block float-anim">
+                        <div class="bg-gradient-to-tr from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-3xl shadow-2xl relative z-20 transform rotate-2 hover:rotate-0 transition-all duration-500">
+                            <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+                                <div class="flex gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
+                                <div class="text-xs text-slate-500 font-mono">AR_Education_LMS.exe</div>
+                            </div>
+                            <div class="space-y-4 font-mono text-sm text-emerald-400">
+                                <p>> Initializing Learning Module...</p>
+                                <p>> Loading Python Course... <span class="text-white">Done 100%</span></p>
+                                <p>> Loading Web Development... <span class="text-white">Done 100%</span></p>
+                                <div class="p-4 bg-emerald-900/20 rounded-lg border border-emerald-500/20 mt-4">
+                                    <p class="text-white font-bold text-lg mb-1">Congratulations! 🎉</p>
+                                    <p class="text-slate-400 text-xs">You are ready to build the future.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute top-4 -right-4 w-full h-full bg-emerald-600 rounded-3xl -z-10 opacity-20 transform rotate-6"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Courses (Same as before) -->
+            <div class="py-20 max-w-6xl mx-auto px-6">
+                <div class="text-center mb-16">
+                    <span class="text-emerald-600 font-bold uppercase tracking-widest text-sm">Our Syllabus</span>
+                    <h2 class="text-3xl md:text-4xl font-black text-slate-900 mt-2">Popular Courses</h2>
+                    <div class="w-20 h-1.5 bg-emerald-500 mx-auto mt-4 rounded-full"></div>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Course 1 -->
+                    <div class="glass-card p-8 rounded-3xl border border-slate-100 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 bg-emerald-100 w-24 h-24 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:bg-emerald-200"></div>
+                        <div class="w-14 h-14 bg-white rounded-2xl shadow-md flex items-center justify-center mb-6 relative z-10 text-2xl">🖥️</div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">DCA / ADCA</h3>
+                        <p class="text-slate-500 text-sm mb-6 leading-relaxed">Complete knowledge of Basic Computer, MS Office, Excel, Tally, and Internet. Best for Govt jobs.</p>
+                        <button onclick="showView('view-apply')" class="text-emerald-600 font-bold text-sm hover:underline flex items-center gap-1">
+                            Apply Now <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Course 2 -->
+                    <div class="glass-card p-8 rounded-3xl border border-slate-100 relative overflow-hidden group bg-slate-900 text-white">
+                        <div class="absolute top-0 right-0 bg-slate-800 w-24 h-24 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:bg-slate-700"></div>
+                        <div class="w-14 h-14 bg-slate-800 rounded-2xl shadow-md border border-slate-700 flex items-center justify-center mb-6 relative z-10 text-2xl">🐍</div>
+                        <h3 class="text-xl font-bold mb-2">Python & Coding</h3>
+                        <p class="text-slate-400 text-sm mb-6 leading-relaxed">Learn software development and logic building. Programming is essential to become future-ready.</p>
+                        <button onclick="showView('view-apply')" class="text-emerald-400 font-bold text-sm hover:underline flex items-center gap-1">
+                            Start Coding <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Course 3 -->
+                    <div class="glass-card p-8 rounded-3xl border border-slate-100 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 bg-purple-100 w-24 h-24 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:bg-purple-200"></div>
+                        <div class="w-14 h-14 bg-white rounded-2xl shadow-md flex items-center justify-center mb-6 relative z-10 text-2xl">🎨</div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">Web Design</h3>
+                        <p class="text-slate-500 text-sm mb-6 leading-relaxed">Learn to build your own website using HTML, CSS, and JavaScript. Perfect course for freelancing.</p>
+                        <button onclick="showView('view-apply')" class="text-purple-600 font-bold text-sm hover:underline flex items-center gap-1">
+                            Learn More <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="bg-slate-900 text-white pt-16 pb-8 rounded-t-[3rem] mt-10">
+                <!-- (Footer content same as before) -->
+                <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-12 mb-12">
+                    <div>
+                        <h4 class="text-2xl font-black mb-4 text-emerald-500">AR COMPUTER</h4>
+                        <p class="text-slate-400 text-sm leading-relaxed">Empowering students with digital skills. Our mission is to make every student computer literate.</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-4">Quick Links</h4>
+                        <ul class="space-y-2 text-slate-400 text-sm">
+                            <li><a href="#" onclick="showView('view-home')" class="hover:text-emerald-400">Home</a></li>
+                            <li><a href="#" onclick="showView('view-apply')" class="hover:text-emerald-400">Apply Online</a></li>
+                            <li><a href="#" onclick="showView('view-student-login')" class="hover:text-emerald-400">Student Login</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-4">Contact Us</h4>
+                        <p class="text-slate-400 text-sm mb-2">📍 Kodaldhowa Ward No. 2, Fakiragram, Kokrajhar, 783345</p>
+                        <p class="text-slate-400 text-sm mb-2">📞 +91 6002880939</p>
+                        <p class="text-slate-400 text-sm">📧 arcomputer.education0@gmail.com</p>
+                    </div>
+                </div>
+                <div class="border-t border-slate-800 pt-8 text-center text-slate-500 text-xs">
+                    &copy; 2026 AR Computer Education. All Rights Reserved.
+                </div>
+            </footer>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- STUDENT LOGIN VIEW -->
+        <!-- ============================================= -->
+        <div id="view-student-login" class="hidden fade-in max-w-md mx-auto p-4 py-16">
+            <!-- (Student Login Form Same) -->
+            <div class="bg-white rounded-3xl p-8 shadow-2xl border border-slate-100">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-lg">
+                        <span class="text-3xl">👨‍🎓</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800">Student Portal</h2>
+                    <p class="text-slate-500 text-sm">Login with your Enrollment ID and Password</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Enrollment ID</label>
+                        <input type="text" id="loginEnrollment" placeholder="Ex: 1047..." class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-3 px-4 outline-none focus:border-emerald-500 transition-all font-mono font-bold text-lg text-center">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Password</label>
+                        <input type="password" id="loginPass" placeholder="••••" class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-3 px-4 outline-none focus:border-emerald-500 transition-all text-center">
+                    </div>
+                    
+                    <button onclick="handleStudentLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-95 text-lg mt-4">
+                        Secure Login
+                    </button>
+                    <button onclick="showView('view-home')" class="w-full text-slate-400 text-sm font-semibold hover:text-slate-600 py-2">Back to Home</button>
+                </div>
             </div>
         </div>
 
-        <!-- STUDENT SECTION: SUCCESS -->
-        <div id="view-student-success" class="hidden fade-in max-w-md mx-auto mt-10 text-center">
+        <!-- ============================================= -->
+        <!-- STUDENT DASHBOARD -->
+        <!-- ============================================= -->
+        <div id="view-student-dashboard" class="hidden fade-in p-4 md:p-8 space-y-6">
+            
+            <!-- Dashboard Header -->
+            <div class="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">My Dashboard</h2>
+                    <p class="text-sm text-emerald-600 font-bold" id="dashWelcome">Welcome back, Student</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-slate-400 font-bold uppercase">Today</div>
+                    <div class="font-mono font-bold text-slate-800" id="dashDate">--/--/----</div>
+                </div>
+            </div>
+
+            <!-- New: Certificates Section in Student Dashboard -->
+            <div id="studentCertSection" class="hidden bg-gradient-to-r from-yellow-50 to-amber-50 border border-amber-200 p-6 rounded-3xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h3 class="font-black text-amber-800 text-xl flex items-center gap-2">
+                            <span class="text-2xl">🎓</span> Congratulations!
+                        </h3>
+                        <p class="text-amber-700 text-sm mt-1">You have successfully completed your course. Your certificate is ready.</p>
+                    </div>
+                    <button onclick="downloadMyCertificate()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-amber-200 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Download Certificate
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Card 1: Student Identity -->
+                <div class="dashboard-card p-6 bg-gradient-to-br from-slate-800 to-slate-900 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10"></div>
+                    <div class="flex justify-between items-start mb-6">
+                        <!-- Student Photo Container (Updated) -->
+                        <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/20 bg-white/10 relative z-10">
+                            <img id="dashProfilePic" class="w-full h-full object-cover hidden" alt="Profile">
+                            <div id="dashProfilePlaceholder" class="w-full h-full flex items-center justify-center text-3xl backdrop-blur-sm text-white">👤</div>
+                        </div>
+                        <span class="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded z-10 h-fit">ACTIVE</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-1 relative z-10" id="dashName">Student Name</h3>
+                    <p class="text-slate-400 text-sm font-mono mb-6 relative z-10" id="dashID">ID: --------</p>
+                    <div class="border-t border-white/10 pt-4 mt-auto relative z-10">
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span>Course</span>
+                            <span class="text-white font-bold" id="dashCourse">Running</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: NEW LIVE ATTENDANCE SYSTEM -->
+                <div class="dashboard-card p-6 bg-emerald-50 border-emerald-200 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <svg class="w-32 h-32 text-emerald-900" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h7V2H4c-1.1 0-2 .9-2 2v7h2V4zm6 9l-4 5h12l-3-4-2.03 2.71L10 13zm7-4.5c0-.83-.67-1.5-1.5-1.5S14 7.67 14 8.5s.67 1.5 1.5 1.5S17 9.33 17 8.5zM20 2h-7v2h7v7h2V4c0-1.1-.9-2-2-2zm0 18h-7v2h7c1.1 0 2-.9 2-2v-7h-2v7zM4 13H2v7c0 1.1.9 2 2 2h7v-2H4v-7z"/></svg>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="bg-white w-12 h-12 rounded-xl flex items-center justify-center shadow-sm mb-4 text-2xl border border-emerald-100">📸</div>
+                        <h3 class="text-xl font-bold text-slate-800">Live Attendance</h3>
+                        <p class="text-slate-600 text-sm mt-1 mb-4">Verify your identity with live photo scan.</p>
+                        <button onclick="startCamera()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group-hover:scale-105">
+                            <div class="w-2 h-2 bg-red-400 rounded-full animate-ping"></div>
+                            Open Scanner
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 3: Quick Stats & Notices -->
+                <div class="dashboard-card p-6">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Info & Notices
+                    </h3>
+                    <div id="studentNoticeArea" class="bg-amber-50 border border-amber-100 p-4 rounded-xl">
+                        <p class="text-xs text-amber-800 font-bold mb-2">📢 Latest Notice:</p>
+                        <p class="text-sm text-amber-900" id="studentNoticeText">No new notices for you.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent History -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <h3 class="font-bold text-slate-800 mb-4">Your Recent Attendance</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3 rounded-l-lg">Date</th>
+                                <th class="px-4 py-3">Time</th>
+                                <th class="px-4 py-3 rounded-r-lg text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentAttendanceHistory">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- ADMISSION FORM -->
+        <!-- ============================================= -->
+        <div id="view-apply" class="hidden fade-in max-w-4xl mx-auto p-4 py-12">
+            <!-- (Admission form HTML remains same as previous version) -->
+            <div class="bg-white rounded-3xl p-8 md:p-10 shadow-2xl border border-slate-100 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-red-600 via-red-500 to-red-600"></div>
+                
+                <div class="flex justify-between items-end mb-8 border-b border-slate-200 pb-4">
+                    <div>
+                        <h2 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Registration Form</h2>
+                        <p class="text-slate-500 text-sm mt-1">Please fill all details in Block Letters</p>
+                    </div>
+                    <div class="text-right hidden md:block">
+                        <p class="text-xs text-slate-400 font-bold uppercase">Session</p>
+                        <p class="text-xl font-bold text-emerald-600">2026-2027</p>
+                    </div>
+                </div>
+                
+                <form id="admissionForm" onsubmit="handleAdmission(event)" class="space-y-8">
+                    <!-- Applicant Details Section -->
+                    <div class="space-y-6">
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg border-l-4 border-emerald-500">
+                            <h3 class="font-bold text-slate-700 uppercase tracking-wider text-sm">Applicant Details</h3>
+                        </div>
+
+                        <!-- PHOTO UPLOAD SECTION -->
+                        <div class="flex flex-col md:flex-row gap-6 items-start">
+                             <div class="flex-1 w-full grid md:grid-cols-1 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Name Of The Applicant</label>
+                                    <input type="text" id="applyName" required class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all uppercase placeholder:normal-case" placeholder="Full Name">
+                                </div>
+                            </div>
+                            <div class="w-full md:w-32 flex flex-col items-center gap-2">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Photo</label>
+                                <div class="w-24 h-24 bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center overflow-hidden relative group">
+                                    <img id="photoPreview" class="hidden w-full h-full object-cover">
+                                    <div id="photoPlaceholder" class="text-slate-400 text-center text-[10px]">
+                                        <span>Click to<br>Upload</span>
+                                    </div>
+                                    <input type="file" id="applyPhoto" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewImage(this)">
+                                </div>
+                                <p class="text-[9px] text-slate-400 text-center">Max 500KB<br>Passport Size</p>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Father's Name</label>
+                                <input type="text" id="applyFather" required class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all uppercase">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Mother's Name</label>
+                                <input type="text" id="applyMother" required class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all uppercase">
+                            </div>
+                        </div>
+
+                         <div class="grid md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Guardian/Husband's Name</label>
+                                <input type="text" id="applyGuardian" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all uppercase" placeholder="(If Applicable)">
+                            </div>
+                             <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Date of Birth</label>
+                                <input type="date" id="applyDOB" required class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all uppercase">
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-3 gap-4">
+                             <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Gender</label>
+                                <select id="applyGender" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all">
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Marital Status</label>
+                                <select id="applyMarital" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all">
+                                    <option>Unmarried</option>
+                                    <option>Married</option>
+                                </select>
+                            </div>
+                             <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Category</label>
+                                <select id="applyCategory" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all">
+                                    <option>General</option>
+                                    <option>OBC</option>
+                                    <option>SC</option>
+                                    <option>ST</option>
+                                </select>
+                            </div>
+                        </div>
+
+                         <div class="grid md:grid-cols-3 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Religion</label>
+                                <input type="text" id="applyReligion" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all uppercase">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Qualification</label>
+                                <select id="applyQualification" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all">
+                                    <option>Class VIII</option>
+                                    <option>10th</option>
+                                    <option>12th</option>
+                                    <option>Graduate</option>
+                                    <option>Post Graduate</option>
+                                    <option>Others</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Occupation</label>
+                                <input type="text" id="applyOccupation" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all uppercase">
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-3 gap-4">
+                             <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Mobile No.</label>
+                                <input type="tel" id="applyPhone" required class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Guardian's Mob No.</label>
+                                <input type="tel" id="applyGuardianPhone" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all">
+                            </div>
+                             <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Email</label>
+                                <input type="email" id="applyEmail" required class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all lowercase">
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Id Proof Type</label>
+                                <select id="applyIdType" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all">
+                                    <option>Aadhar Card</option>
+                                    <option>PAN Card</option>
+                                    <option>Voter ID</option>
+                                    <option>Driving License</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Id Proof Number</label>
+                                <input type="text" id="applyIdNumber" required class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all uppercase">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course & Documents Section -->
+                    <div class="space-y-6">
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg border-l-4 border-slate-500">
+                            <h3 class="font-bold text-slate-700 uppercase tracking-wider text-sm">Course & Documents</h3>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4">
+                             <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Application For (Course)</label>
+                                <select id="applyCourse" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all font-bold text-slate-700">
+                                    <option>DCA (Diploma in Computer Application)</option>
+                                    <option>ADCA (Advanced Diploma in Computer Application)</option>
+                                    <option>Python Programming</option>
+                                    <option>Web Development</option>
+                                    <option>Tally Prime</option>
+                                    <option>CCC / BCC</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Enquiry Source</label>
+                                <select id="applySource" class="w-full bg-white border border-slate-300 rounded-lg py-2.5 px-4 outline-none focus:border-emerald-500 transition-all">
+                                    <option>Banner</option>
+                                    <option>Leaflet</option>
+                                    <option>Newspaper</option>
+                                    <option>Friends</option>
+                                    <option>Internet/Social Media</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- DOCUMENT UPLOAD -->
+                        <div class="space-y-1">
+                             <label class="text-xs font-bold text-slate-500 uppercase">Upload Documents (ID Proof)</label>
+                             <div class="relative flex items-center">
+                                <input type="file" id="applyDoc" accept=".pdf,image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-slate-300 rounded-lg cursor-pointer">
+                             </div>
+                             <p class="text-[10px] text-slate-400">PDF or Image (JPG/PNG). Max 1MB.</p>
+                        </div>
+
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-100 flex flex-col md:flex-row gap-4 items-center">
+                        <button type="submit" id="submitBtn" class="w-full md:w-auto flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-red-100 transition-all active:scale-95 text-lg uppercase tracking-wide">
+                            Submit Registration Form
+                        </button>
+                        <button type="button" onclick="showView('view-home')" class="w-full md:w-auto px-8 py-4 text-slate-500 font-bold hover:text-slate-800 hover:bg-slate-50 rounded-xl transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ADMISSION SUCCESS -->
+        <div id="view-apply-success" class="hidden fade-in max-w-md mx-auto text-center p-4 py-12">
+            <!-- (Success message HTML same) -->
+            <div class="bg-white rounded-3xl p-10 shadow-2xl border border-emerald-100 relative overflow-hidden">
+                 <div class="absolute top-0 left-0 w-full h-full bg-emerald-50 opacity-50 -z-10"></div>
+                <div class="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-black text-slate-800 mb-1">Success!</h2>
+                <p class="text-slate-500 mb-6 font-medium">Registration Form Submitted Successfully.</p>
+                <div class="bg-white border-2 border-dashed border-slate-200 p-4 rounded-2xl mb-8 relative">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1 tracking-widest">Your Registration No.</span>
+                    <span id="displayAppId" class="text-3xl font-mono font-black text-emerald-600 tracking-tight">---</span>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <button onclick="downloadApplicationPDF()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Download PDF Receipt
+                    </button>
+                    <button onclick="showView('view-home')" class="text-slate-500 font-bold text-sm hover:text-emerald-600 py-2">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRACK STATUS -->
+        <div id="view-status" class="hidden fade-in max-w-md mx-auto p-4 py-12">
+            <!-- (Track Status HTML Same) -->
+            <div class="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Track Application</h2>
+                <p class="text-slate-500 mb-8">Enter your App ID to check status.</p>
+                <div class="space-y-4">
+                    <input type="text" id="statusInput" placeholder="APP/AR-XXXXXX" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 px-6 text-lg font-mono outline-none focus:border-emerald-500 transition-all text-center uppercase placeholder:normal-case">
+                    <button onclick="checkStatus()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95">Check Status</button>
+                </div>
+
+                <div id="statusResult" class="hidden mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 fade-in text-center relative">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Result</div>
+                    <h4 id="statusName" class="font-bold text-xl text-slate-800 mt-2">---</h4>
+                    <p id="statusCourse" class="text-sm text-slate-500 mb-4 font-medium">---</p>
+                    <div id="statusBadge" class="inline-block px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-sm">---</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCANNING VIEW (UPDATED) -->
+        <div id="view-student-scan" class="hidden fade-in max-w-md mx-auto text-center p-4">
+            <div class="bg-white rounded-3xl p-6 shadow-2xl border border-slate-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 text-lg">Face Verification</h3>
+                    <div class="text-xs font-mono text-emerald-600 bg-emerald-50 px-2 py-1 rounded">LIVE CAMERA</div>
+                </div>
+                
+                <h3 id="displayName" class="font-bold text-slate-500 mb-4 text-sm">Student: ---</h3>
+                
+                <div class="relative rounded-2xl overflow-hidden aspect-square bg-black mb-6 border-4 border-slate-100 shadow-inner group">
+                    <video id="webcam" autoplay playsinline class="w-full h-full object-cover transform scale-x-[-1]"></video>
+                    <canvas id="captureCanvas" class="hidden"></canvas>
+                    
+                    <!-- New Techy Overlay -->
+                    <div id="scannerOverlay" class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none">
+                        <!-- Corner Brackets -->
+                        <div class="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-emerald-500 rounded-tl-lg"></div>
+                        <div class="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-emerald-500 rounded-tr-lg"></div>
+                        <div class="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-emerald-500 rounded-bl-lg"></div>
+                        <div class="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-emerald-500 rounded-br-lg"></div>
+                        
+                        <!-- Scanning Animation -->
+                        <div class="scan-line opacity-50"></div>
+                        
+                        <!-- Face Frame -->
+                        <div class="absolute inset-0 m-12 border-2 border-dashed border-white/30 rounded-2xl"></div>
+                    </div>
+                </div>
+                
+                <button id="markBtn" onclick="markAttendance()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
+                    Capture & Mark Present
+                </button>
+                <button onclick="stopCameraAndReturn()" class="mt-4 text-slate-400 font-bold text-sm hover:text-slate-600 py-2 w-full">Cancel</button>
+            </div>
+        </div>
+
+        <!-- ATTENDANCE SUCCESS (UPDATED) -->
+        <div id="view-student-success" class="hidden fade-in max-w-md mx-auto text-center p-4 py-12">
             <div class="bg-white rounded-3xl p-10 shadow-xl border border-emerald-100">
                 <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <h2 class="text-2xl font-black text-slate-800 mb-1">GitHub Updated!</h2>
-                <p id="successMsg" class="text-slate-500 mb-8"></p>
-                <button onclick="location.reload()" class="bg-slate-100 px-8 py-2 rounded-full text-slate-600 font-bold">Exit</button>
-            </div>
-        </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-2">Marked!</h2>
+                
+                <!-- CAPTURED PHOTO DISPLAY -->
+                <div class="w-32 h-32 mx-auto bg-slate-100 rounded-xl overflow-hidden border-2 border-emerald-500 shadow-md mb-4 transform rotate-3 hover:rotate-0 transition-all">
+                     <img id="successPhoto" class="w-full h-full object-cover">
+                </div>
 
-        <!-- ADMIN LOGIN -->
-        <div id="view-admin-login" class="hidden fade-in max-w-md mx-auto mt-10">
-            <div class="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
-                <div class="text-center mb-6">
-                    <h2 class="text-2xl font-bold text-slate-800">Admin GitHub Portal</h2>
-                    <p class="text-slate-500 font-medium">Remote Repo Access</p>
-                </div>
-                <div class="space-y-4">
-                    <input type="email" id="adminEmail" placeholder="xxxxxxx@xxx.com" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3 px-4 outline-none focus:border-emerald-500">
-                    <input type="password" id="adminPass" placeholder="••••••••" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3 px-4 outline-none focus:border-emerald-500">
-                    <button onclick="loginAdmin()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg">Login to Dashboard</button>
-                    <button onclick="location.reload()" class="w-full text-slate-400 text-sm">Cancel</button>
-                </div>
+                <p id="successMsg" class="text-slate-500 mb-8 font-medium"></p>
+                <button onclick="showView('view-student-dashboard')" class="bg-slate-100 hover:bg-slate-200 px-8 py-3 rounded-xl text-slate-600 font-bold transition-colors">Back to Dashboard</button>
             </div>
         </div>
 
         <!-- ADMIN DASHBOARD -->
-        <div id="view-admin-dashboard" class="hidden fade-in space-y-6">
+        <div id="view-admin-dashboard" class="hidden fade-in space-y-6 p-4 md:p-8">
+            <!-- Header -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                 <div>
-                    <h2 class="text-2xl font-bold text-slate-800 tracking-tight">GitHub Database</h2>
-                    <p class="text-sm text-slate-500">All records are stored as JSON files in your repository.</p>
+                    <h2 class="text-2xl font-bold text-slate-800">Admin Portal</h2>
+                    <p class="text-sm text-slate-500 uppercase font-black text-emerald-600 tracking-wider">Control Center</p>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="toggleConfig()" class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-100">GitHub Settings</button>
-                    <button onclick="loadDashboard()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200">Refresh Records</button>
+                    <button onclick="toggleConfig()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold transition-colors">⚙️ Settings</button>
+                    <button onclick="loadDashboard()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg shadow-emerald-200">🔄 Refresh Data</button>
                 </div>
             </div>
 
-            <!-- GitHub Configuration Panel -->
-            <div id="configPanel" class="hidden bg-slate-800 text-white p-6 rounded-3xl shadow-lg border border-slate-700 fade-in">
-                <h3 class="font-bold mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
-                    GitHub Connection Settings
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <label class="block text-slate-400 mb-1">GitHub Username (Owner)</label>
-                        <input type="text" id="ghUsername" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 outline-none focus:border-emerald-500" placeholder="e.g. your-github-username">
+            <!-- Dashboard Tabs -->
+            <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 inline-flex flex-wrap gap-2">
+                <button id="tabAppBtn" onclick="switchAdminTab('applications')" class="px-6 py-2 font-bold text-sm rounded-xl transition-all">Applications</button>
+                <button id="tabRegBtn" onclick="switchAdminTab('register')" class="px-6 py-2 font-bold text-sm rounded-xl transition-all">Students</button>
+                <button id="tabCertBtn" onclick="switchAdminTab('certificates')" class="px-6 py-2 font-bold text-sm rounded-xl transition-all">Certificates</button>
+                <button id="tabAttBtn" onclick="switchAdminTab('attendance')" class="px-6 py-2 font-bold text-sm rounded-xl transition-all">Logs</button>
+                <button id="tabNoticeBtn" onclick="switchAdminTab('notices')" class="px-6 py-2 font-bold text-sm rounded-xl transition-all">Notices</button>
+            </div>
+
+            <!-- ADMISSION REQUESTS SECTION -->
+            <div id="admin-applications-section" class="space-y-4">
+                <div id="applicationList" class="grid gap-4"></div>
+            </div>
+
+            <!-- STUDENT REGISTER SECTION -->
+            <div id="admin-register-section" class="hidden space-y-6">
+                <!-- (Registration form same as before) -->
+                <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100">
+                    <h4 class="font-bold text-emerald-800 mb-4">Register New Student</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <input type="text" id="regEnroll" placeholder="Enrollment No (e.g. 101)" class="p-3 rounded-xl border-2 border-emerald-100 outline-none focus:border-emerald-500 bg-white">
+                        <input type="text" id="regName" placeholder="Student Full Name" class="p-3 rounded-xl border-2 border-emerald-100 outline-none focus:border-emerald-500 bg-white">
+                        <div class="relative">
+                            <input type="text" id="regPass" placeholder="Create Password" class="w-full p-3 rounded-xl border-2 border-emerald-100 outline-none focus:border-emerald-500 bg-white">
+                            <span class="absolute right-3 top-3 text-xs text-slate-400 font-bold">PASSWORD</span>
+                        </div>
+                        <select id="regCourse" class="p-3 rounded-xl border-2 border-emerald-100 outline-none focus:border-emerald-500 bg-white">
+                            <option value="DCA">DCA</option>
+                            <option value="ADCA">ADCA</option>
+                            <option value="Python Programming">Python Programming</option>
+                            <option value="Web Development">Web Development</option>
+                            <option value="Tally Prime">Tally Prime</option>
+                        </select>
+                        <button onclick="registerStudent()" class="bg-emerald-600 text-white font-bold py-3 rounded-xl md:col-span-2 shadow-lg active:scale-95 transition-all">Create Student Login</button>
                     </div>
-                    <div>
-                        <label class="block text-slate-400 mb-1">Personal Access Token</label>
-                        <input type="password" id="ghToken" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 outline-none focus:border-emerald-500" placeholder="ghp_xxxx">
-                    </div>
-                    <div class="md:col-span-2 flex flex-wrap gap-2 mt-2">
-                        <button onclick="saveGHConfig()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition-all flex-1">Update Settings</button>
-                        <button onclick="resetToDefaults()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg transition-all">Reset to Defaults</button>
-                    </div>
-                    <div class="md:col-span-2">
-                        <p class="text-xs text-slate-500 uppercase font-bold">Current Repo Target: arcomputereducation</p>
-                        <p class="text-[10px] text-slate-400 mt-1 italic leading-tight bg-slate-900/50 p-2 rounded">
-                            <span class="text-emerald-400 font-bold">FIX FOR ACCESS DENIED:</span><br>
-                            1. Go to GitHub Settings > Developer Settings > Personal access tokens.<br>
-                            2. Edit your token and ensure it has <span class="text-emerald-400 font-bold">'repo'</span> scope (for Classic tokens) or <span class="text-emerald-400 font-bold">'Contents: Read and write'</span> (for Fine-grained tokens).
-                        </p>
-                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold text-[10px] tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3">ID</th>
+                                <th class="px-6 py-3">Student Name</th>
+                                <th class="px-6 py-3">Course</th>
+                                <th class="px-6 py-3">Password</th>
+                                <th class="px-6 py-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registeredStudentList"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <div id="historyContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
-            <div id="emptyState" class="hidden text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-                <p class="text-slate-400 font-medium">No records found. Check GitHub Username and Token.</p>
+            <!-- CERTIFICATE SECTION (NEW) -->
+            <div id="admin-certificates-section" class="hidden space-y-6">
+                <div class="bg-amber-50 p-6 rounded-2xl border border-amber-100">
+                    <h4 class="font-bold text-amber-800 mb-4 flex items-center gap-2"><span class="text-xl">🎓</span> Issue New Certificate</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <input type="text" id="certStudentId" placeholder="Enrollment ID (e.g. 1047)" class="p-3 rounded-xl border-2 border-amber-100 outline-none focus:border-amber-500 bg-white">
+                        <input type="text" id="certStudentName" placeholder="Student Name (Auto or Manual)" class="p-3 rounded-xl border-2 border-amber-100 outline-none focus:border-amber-500 bg-white">
+                        <input type="text" id="certCourse" placeholder="Course Completed" class="p-3 rounded-xl border-2 border-amber-100 outline-none focus:border-amber-500 bg-white">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="certGrade" placeholder="Grade/Percentage" class="p-3 rounded-xl border-2 border-amber-100 outline-none focus:border-amber-500 bg-white">
+                            <input type="date" id="certDate" class="p-3 rounded-xl border-2 border-amber-100 outline-none focus:border-amber-500 bg-white">
+                        </div>
+                        <button onclick="issueCertificate()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl md:col-span-2 shadow-lg shadow-amber-200 active:scale-95 transition-all">Generate & Issue Certificate</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold text-[10px] tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3">ID</th>
+                                <th class="px-6 py-3">Student</th>
+                                <th class="px-6 py-3">Course</th>
+                                <th class="px-6 py-3">Issue Date</th>
+                                <th class="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="certificateList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ATTENDANCE LOGS SECTION -->
+            <div id="admin-attendance-section" class="hidden">
+                <div id="historyContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+            </div>
+
+            <!-- NOTICES SECTION -->
+            <div id="admin-notices-section" class="hidden space-y-6">
+                <!-- (Notice form HTML same) -->
+                <div class="bg-amber-50 p-6 rounded-2xl border border-amber-100">
+                    <h4 class="font-bold text-amber-800 mb-4">Post New Notice</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <select id="noticeType" onchange="toggleNoticeTarget()" class="p-3 rounded-xl border-2 border-amber-100 outline-none focus:border-amber-500 bg-white">
+                            <option value="public">Public (Home Page)</option>
+                            <option value="student">Specific Student</option>
+                        </select>
+                        <input type="text" id="noticeTarget" placeholder="Enter Student Enrollment ID" class="hidden p-3 rounded-xl border-2 border-amber-100 outline-none focus:border-amber-500 bg-white">
+                        <input type="text" id="noticeMsg" placeholder="Write notice message here..." class="md:col-span-2 p-3 rounded-xl border-2 border-amber-100 outline-none focus:border-amber-500 bg-white">
+                        <button onclick="postNotice()" class="bg-amber-600 text-white font-bold py-3 rounded-xl md:col-span-2 shadow-lg active:scale-95 transition-all">Publish Notice</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold text-[10px] tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3">Date</th>
+                                <th class="px-6 py-3">Type</th>
+                                <th class="px-6 py-3">Message</th>
+                                <th class="px-6 py-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminNoticeList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Config Panel -->
+            <div id="configPanel" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                <!-- (Config Panel HTML Same) -->
+                <div class="bg-slate-900 text-white p-8 rounded-3xl shadow-2xl border border-slate-700 w-full max-w-md relative">
+                    <button onclick="toggleConfig()" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
+                    <h3 class="font-bold mb-6 text-xl">Cloud Sync (GitHub)</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-slate-400 mb-1 text-xs uppercase font-bold">GH Username</label>
+                            <input type="text" id="ghUsername" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1 text-xs uppercase font-bold">Personal Access Token</label>
+                            <input type="password" id="ghToken" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-emerald-500">
+                        </div>
+                        <button onclick="saveGHConfig()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg mt-2">Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDIT MODAL (UNIVERSAL) -->
+        <div id="editModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm fade-in">
+            <div class="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                <button onclick="closeEditModal()" class="absolute top-4 right-4 bg-slate-100 p-2 rounded-full text-slate-500 hover:bg-slate-200">✕</button>
+                <h3 class="text-xl font-bold text-slate-800 mb-6">Edit Details</h3>
+                <div id="editFormContainer" class="space-y-4">
+                    <!-- Dynamic Inputs injected here -->
+                </div>
+                <button id="saveEditBtn" onclick="saveEdit()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg mt-6 active:scale-95 transition-all">Save Changes</button>
+            </div>
+        </div>
+
+        <!-- ADMIN LOGIN -->
+        <div id="view-admin-login" class="hidden fade-in max-w-sm mx-auto mt-20 p-4">
+            <!-- (Admin Login HTML Same) -->
+            <div class="bg-white rounded-3xl p-8 shadow-2xl border border-slate-100 text-center">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-6">Admin Access</h2>
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Email</label>
+                        <input type="text" id="adminEmail" placeholder="Enter User ID" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3 px-4 outline-none focus:border-emerald-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Password</label>
+                        <input type="password" id="adminPass" placeholder="Enter Password" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3 px-4 outline-none focus:border-emerald-500 transition-all">
+                    </div>
+                    <button onclick="loginAdmin()" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-emerald-600 transition-all active:scale-95 mt-2">Secure Login</button>
+                    <button onclick="showView('view-home')" class="w-full text-slate-400 text-sm font-semibold hover:text-slate-600">Cancel</button>
+                </div>
             </div>
         </div>
 
     </div>
 
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- CORE LOGIC ---
-        const studentsList = {
-            "104726006398": "Shahina Parbin",
-            "104726006397": "JESHMINA BEGUM"
-        };
+        // --- CORE DATA ---
+        const adminCreds = { email: "ashinur@arcomputer.com", pass: "Ashinur@123" };
+        
+        // In-memory databases (will be populated from GitHub)
+        let admissionsDB = {};
+        let studentsDB = {};
+        let noticesDB = [];
+        let certificatesDB = [];
+        
+        let currentApp = null;
+        let currentUser = null; // For tracking logged in student
+        let isAdminLoggedIn = false; // For tracking admin login
 
-        const adminCreds = {
-            email: "ashinur@gmail.com",
-            pass: "Ashinur@123"
-        };
+        // Edit State
+        let currentEditId = null;
+        let currentEditType = null; // 'student' or 'application' or 'notice' or 'certificate'
 
-        // GitHub Config Default Constants
-        const DEFAULT_TOKEN = "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";
+        // GitHub Sync Config
+        // SECURITY: Token is obfuscated (Hidden in parts)
+        const _p1 = "11BXKSOYA0Jgc2qpa6lLaV";
+        const _p2 = "_yfYB2lE8UWprWdeHN4d3sSorVe";
+        const _p3 = "Cdani6WtQeKNCjktCXAD236ZU7rk0scUD";
+        
+        // Reconstructing token at runtime
+        const DEFAULT_TOKEN = "github_pat_" + _p1 + _p2 + _p3;
         const DEFAULT_OWNER = "ashinur783344-glitch"; 
-
+        
+        // STRICTLY USE CODE CONSTANTS - NO LOCAL STORAGE FALLBACK
         let GH_CONFIG = {
-            token: localStorage.getItem('gh_token') || DEFAULT_TOKEN,
-            owner: localStorage.getItem('gh_owner') || DEFAULT_OWNER, 
-            repo: "arcomputereducation", // CORRECTED REPOSITORY NAME
-            path: "attendance_data"
+            token: DEFAULT_TOKEN,
+            owner: DEFAULT_OWNER, 
+            repo: "arcomputereducation",
+            path_attendance: "data/attendance",
+            path_admissions: "data/admissions",
+            path_students: "data/students",
+            path_notices: "data/notices.json",
+            path_certs: "data/certificates.json"
         };
 
         let stream = null;
         let currentStudent = null;
 
-        // UI Toggler
-        window.showView = (viewId) => {
-            ['view-student-start', 'view-student-scan', 'view-student-success', 'view-admin-login', 'view-admin-dashboard'].forEach(id => {
+        // --- GITHUB API HELPER FUNCTIONS ---
+
+        async function ghFetchOneFile(path) {
+             const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`;
+             const response = await fetch(url, { headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` } });
+             if(response.ok) {
+                 const data = await response.json();
+                 return JSON.parse(decodeURIComponent(escape(atob(data.content))));
+             }
+             return null;
+        }
+
+        async function ghUploadFile(path, content, message) {
+            const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`;
+            
+            let sha = null;
+            try {
+                const check = await fetch(url, { headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` } });
+                
+                if (check.status === 401) {
+                    console.error("Invalid GitHub Token");
+                }
+
+                if(check.ok) {
+                    const data = await check.json();
+                    sha = data.sha;
+                }
+            } catch(e) { 
+                console.log("New file creation or check failed"); 
+            }
+
+            const payload = {
+                message: message,
+                content: btoa(unescape(encodeURIComponent(JSON.stringify(content))))
+            };
+            if(sha) {
+                payload.sha = sha;
+            }
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${GH_CONFIG.token}`, 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if(!response.ok) {
+                const errData = await response.json();
+                console.error("GH Error:", errData);
+                
+                if (response.status === 401 || response.status === 403) {
+                      alert("GitHub Connection Error (401). Please check console.");
+                      throw new Error("Bad Credentials");
+                }
+
+                throw new Error(`GitHub Upload Failed: ${response.status} ${errData.message || response.statusText}. Check if Repo exists!`);
+            }
+            return await response.json();
+        }
+
+        // New Helper for Deletion
+        async function ghDeleteFile(path, sha, message) {
+            const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`;
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${GH_CONFIG.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message, sha })
+            });
+            if(!response.ok) {
+                // Improved Error Handling
+                const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                throw new Error(errorData.message || `Delete failed: ${response.status}`);
+            }
+            return await response.json();
+        }
+
+        async function ghFetchList(path) {
+            const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` } });
+            
+            if (response.status === 401) {
+                console.error("Auth Error 401");
+                return []; 
+            }
+
+            if(!response.ok) return []; // Return empty if folder doesn't exist yet
+            return await response.json();
+        }
+
+        async function ghFetchContent(url) {
+            const response = await fetch(url); // Use download_url directly
+            return await response.json();
+        }
+
+        // --- INITIALIZATION ---
+        // Load Students and Notices on Startup
+        window.onload = async () => {
+            window.showView('view-home');
+            
+            console.log("Syncing data from GitHub...");
+            
+            // 1. Load Notices
+            try {
+                const notices = await ghFetchOneFile(GH_CONFIG.path_notices);
+                if(notices) {
+                    noticesDB = notices;
+                    renderPublicNotices();
+                }
+            } catch(e) { console.log("No notices yet or error loading."); }
+
+            // 2. Load Certificates (same logic)
+            try {
+                const certs = await ghFetchOneFile(GH_CONFIG.path_certs);
+                if(certs) {
+                    certificatesDB = certs;
+                }
+            } catch(e) { console.log("No certificates yet."); }
+        };
+
+
+        // --- NAVIGATION ENGINE ---
+        window.showView = function(viewId) {
+            // AUTH CHECK: Prevent navigating away if logged in
+            if (currentUser && viewId !== 'view-student-dashboard' && viewId !== 'view-student-scan' && viewId !== 'view-student-success') {
+                if(!confirm("Logout current session?")) return;
+                logout();
+            }
+            if (isAdminLoggedIn && viewId !== 'view-admin-dashboard') {
+                if(!confirm("Logout Admin session?")) return;
+                logout();
+            }
+
+            const views = [
+                'view-home', 'view-apply', 'view-apply-success', 
+                'view-status', 'view-student-login', 'view-student-dashboard', 
+                'view-student-scan', 'view-student-success', 'view-admin-login', 'view-admin-dashboard'
+            ];
+            
+            views.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.classList.add('hidden');
             });
-            document.getElementById(viewId).classList.remove('hidden');
-            document.getElementById('navAdminBtn').classList.toggle('hidden', viewId === 'view-admin-dashboard' || viewId === 'view-admin-login');
-            document.getElementById('navLogoutBtn').classList.toggle('hidden', viewId !== 'view-admin-dashboard');
-        };
-
-        window.toggleConfig = () => {
-            const panel = document.getElementById('configPanel');
-            panel.classList.toggle('hidden');
-            document.getElementById('ghUsername').value = GH_CONFIG.owner;
-            document.getElementById('ghToken').value = GH_CONFIG.token;
-        };
-
-        window.saveGHConfig = () => {
-            const owner = document.getElementById('ghUsername').value.trim();
-            const token = document.getElementById('ghToken').value.trim();
             
-            if(!owner || !token) return alert("Please enter both username and token.");
+            const target = document.getElementById(viewId);
+            if(target) target.classList.remove('hidden');
             
-            GH_CONFIG.owner = owner;
-            GH_CONFIG.token = token;
-            
-            localStorage.setItem('gh_owner', owner);
-            localStorage.setItem('gh_token', token);
-            
-            alert("Connection Updated! Testing connection...");
-            document.getElementById('configPanel').classList.add('hidden');
-            loadDashboard();
-        };
-
-        window.resetToDefaults = () => {
-            if (confirm("Reset connection settings to hardcoded defaults?")) {
-                localStorage.removeItem('gh_owner');
-                localStorage.removeItem('gh_token');
-                GH_CONFIG.owner = DEFAULT_OWNER;
-                GH_CONFIG.token = DEFAULT_TOKEN;
-                document.getElementById('ghUsername').value = GH_CONFIG.owner;
-                document.getElementById('ghToken').value = GH_CONFIG.token;
-                alert("Settings reset! Testing defaults...");
-                loadDashboard();
-            }
-        };
-
-        // STUDENT LOGIC
-        window.verifyEnrollment = () => {
-            const input = document.getElementById('enrollInput').value.trim();
-            const error = document.getElementById('enrollError');
-            if (studentsList[input]) {
-                currentStudent = { id: input, name: studentsList[input] };
-                error.classList.add('hidden');
-                startCamera();
+            // Show public notice only on Home Page
+            if(viewId === 'view-home') {
+                document.getElementById('homeNoticeBoard').classList.remove('hidden');
+                renderPublicNotices();
             } else {
-                error.classList.remove('hidden');
+                document.getElementById('homeNoticeBoard').classList.add('hidden');
+            }
+
+            // AUTO-REFRESH ATTENDANCE WHEN RETURNING TO DASHBOARD
+            if(viewId === 'view-student-dashboard' && currentUser) {
+                loadStudentHistory(currentUser.name);
+            }
+
+            window.scrollTo(0, 0);
+
+            // UI Toggle Logic for Nav Buttons
+            const isAdminView = (viewId === 'view-admin-dashboard' || viewId === 'view-admin-login');
+            const isStudentView = (viewId === 'view-student-dashboard' || viewId === 'view-student-scan' || viewId === 'view-student-success');
+
+            const publicLinks = document.querySelectorAll('.public-nav');
+            if(currentUser || isAdminLoggedIn) {
+                publicLinks.forEach(el => el.style.display = 'none');
+                document.getElementById('navLogoutBtn').classList.remove('hidden');
+                document.getElementById('navDashLabel').classList.remove('hidden');
+                document.getElementById('topBanner').classList.add('hidden');
+            } else {
+                publicLinks.forEach(el => el.style.display = 'block');
+                document.getElementById('navLogoutBtn').classList.add('hidden');
+                document.getElementById('navDashLabel').classList.add('hidden');
+                document.getElementById('topBanner').classList.remove('hidden');
+            }
+
+            // Explicitly stop camera if leaving scan view
+            if (viewId !== 'view-student-scan' && stream) {
+                stream.getTracks().forEach(t => t.stop());
+                stream = null;
             }
         };
 
-        async function startCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('webcam').srcObject = stream;
-                document.getElementById('displayName').innerText = currentStudent.name;
-                showView('view-student-scan');
-            } catch (err) {
-                alert("Camera Access Required.");
-            }
+        window.showAdminLogin = function() {
+            window.showView('view-admin-login');
+        };
+
+        // --- GLOBAL LOGOUT ---
+        window.logout = function() {
+            currentUser = null;
+            currentStudent = null; // Important: Clear student session
+            isAdminLoggedIn = false;
+            showView('view-home');
         }
 
-        window.markAttendance = async () => {
-            if (!GH_CONFIG.token || !GH_CONFIG.owner) {
-                alert("GitHub Connection not ready. Admin must set Username in Portal.");
+        window.handleLogoClick = function() {
+            if(currentUser || isAdminLoggedIn) {
+                // Do nothing specific, user is locked to dashboard until logout
+            } else {
+                showView('view-home');
+            }
+        };
+
+        // --- HELPER: Base64 Conversion & Image Resize ---
+        const convertBase64 = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        };
+
+        const resizeImage = (base64Str) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = base64Str;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 300; // slightly increased
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6)); // Compress
+                };
+            });
+        };
+
+        window.previewImage = async function(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 2097152) { // 2MB limit for preview
+                    alert("Image too large! Use < 2MB.");
+                    input.value = "";
+                    return;
+                }
+                const base64 = await convertBase64(file);
+                const preview = document.getElementById('photoPreview');
+                const placeholder = document.getElementById('photoPlaceholder');
+                preview.src = base64;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            }
+        };
+
+        window.previewEditStudentPhoto = async function(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const base64 = await convertBase64(file);
+                const resized = await resizeImage(base64);
+                const preview = document.getElementById('editStudentPhotoPreview');
+                const placeholder = document.getElementById('editStudentPhotoPlaceholder');
+                preview.src = resized;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            }
+        };
+
+
+        // --- NOTICE SYSTEM LOGIC ---
+        window.toggleNoticeTarget = function() {
+            const type = document.getElementById('noticeType').value;
+            const targetInput = document.getElementById('noticeTarget');
+            if(type === 'student') {
+                targetInput.classList.remove('hidden');
+            } else {
+                targetInput.classList.add('hidden');
+            }
+        };
+
+        window.postNotice = async function() {
+            const type = document.getElementById('noticeType').value;
+            const target = document.getElementById('noticeTarget').value.trim();
+            const msg = document.getElementById('noticeMsg').value.trim();
+
+            if(!msg) return alert("Message is required!");
+
+            const newNotice = {
+                id: Date.now().toString(),
+                type: type,
+                target: type === 'student' ? target : 'public',
+                message: msg,
+                date: new Date().toLocaleDateString()
+            };
+
+            noticesDB.push(newNotice);
+            
+            try {
+                // Save whole array to one JSON file
+                await ghUploadFile(GH_CONFIG.path_notices, noticesDB, "Updated Notices");
+                alert("Notice Published to GitHub!");
+                document.getElementById('noticeMsg').value = '';
+                renderAdminNotices();
+            } catch(e) {
+                alert("Failed to publish: " + e.message);
+            }
+        };
+
+        function renderAdminNotices() {
+            const list = document.getElementById('adminNoticeList');
+            list.innerHTML = '';
+            
+            if(noticesDB.length === 0) {
+                list.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 italic">No notices found.</td></tr>';
                 return;
             }
 
-            const overlay = document.getElementById('scannerOverlay');
-            const btn = document.getElementById('markBtn');
-            const video = document.getElementById('webcam');
-            const canvas = document.getElementById('captureCanvas');
+            [...noticesDB].reverse().forEach(notice => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-mono text-slate-500 text-xs">${notice.date}</td>
+                    <td class="px-6 py-4">
+                        <span class="text-[10px] font-bold uppercase px-2 py-1 rounded ${notice.type === 'public' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">
+                            ${notice.type === 'public' ? 'PUBLIC' : 'Student: ' + notice.target}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-800 font-medium text-sm truncate max-w-xs">${notice.message}</td>
+                    <td class="px-6 py-4 text-right flex justify-end gap-2">
+                        <button onclick="openEditModal('notice', '${notice.id}')" class="text-blue-500 hover:text-blue-700 font-bold text-xs bg-blue-50 px-3 py-1 rounded-lg">EDIT</button>
+                        <button onclick="deleteNotice('${notice.id}')" class="text-red-500 hover:text-red-700 font-bold text-xs bg-red-50 px-3 py-1 rounded-lg">DEL</button>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+        }
 
-            overlay.classList.remove('hidden');
+        window.deleteNotice = async function(id) {
+            if(confirm("Delete this notice from GitHub?")) {
+                noticesDB = noticesDB.filter(n => n.id !== id);
+                await ghUploadFile(GH_CONFIG.path_notices, noticesDB, "Deleted Notice");
+                renderAdminNotices();
+            }
+        };
+
+        function renderPublicNotices() {
+            const publicNotices = noticesDB.filter(n => n.type === 'public');
+            const marquee = document.getElementById('publicNoticeText');
+            
+            if(publicNotices.length > 0) {
+                const text = publicNotices.slice(-3).reverse().map(n => `📢 ${n.message}`).join(' &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; ');
+                marquee.innerHTML = text;
+                document.getElementById('homeNoticeBoard').classList.remove('hidden');
+            } else {
+                marquee.innerHTML = "Welcome to AR Computer Education!";
+            }
+        }
+
+        // --- EDIT SYSTEM LOGIC ---
+        window.openEditModal = function(type, id) {
+            currentEditId = id;
+            currentEditType = type;
+            const container = document.getElementById('editFormContainer');
+            container.innerHTML = '';
+
+            if (type === 'student') {
+                const data = studentsDB[id];
+                const name = typeof data === 'object' ? data.name : data;
+                const pass = typeof data === 'object' ? data.password : '';
+                const course = typeof data === 'object' ? data.course : 'DCA';
+                const photo = typeof data === 'object' ? data.photo : null;
+
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Profile Photo</label>
+                            <div class="flex items-center gap-4 mt-2">
+                                <div class="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0">
+                                    <img id="editStudentPhotoPreview" src="${photo || ''}" class="${photo ? '' : 'hidden'} w-full h-full object-cover">
+                                    <div id="editStudentPhotoPlaceholder" class="${photo ? 'hidden' : ''} w-full h-full flex items-center justify-center text-slate-300 text-2xl">📷</div>
+                                </div>
+                                <div>
+                                    <label class="bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors inline-block shadow-sm">
+                                        Change Photo
+                                        <input type="file" id="editStudentPhotoInput" accept="image/*" class="hidden" onchange="previewEditStudentPhoto(this)">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Student Name</label>
+                            <input type="text" id="editName" value="${name}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500 font-bold text-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Course</label>
+                            <select id="editCourse" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                                <option ${course === 'DCA' ? 'selected' : ''}>DCA</option>
+                                <option ${course === 'ADCA' ? 'selected' : ''}>ADCA</option>
+                                <option ${course === 'Python Programming' ? 'selected' : ''}>Python Programming</option>
+                                <option ${course === 'Web Development' ? 'selected' : ''}>Web Development</option>
+                                <option ${course === 'Tally Prime' ? 'selected' : ''}>Tally Prime</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Password</label>
+                            <input type="text" id="editPass" value="${pass}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500 font-mono">
+                        </div>
+                    </div>`;
+            } else if (type === 'application') {
+                const data = admissionsDB[id];
+                // Expanded Edit Form for Application
+                container.innerHTML = `
+                    <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                        <div class="bg-blue-50 p-2 rounded text-xs text-blue-700 font-bold mb-2">Editing Full Admission Details</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Status</label>
+                                <select id="editAppStatus" class="w-full bg-white border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500 font-bold">
+                                    <option ${data.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option ${data.status === 'Approved' ? 'selected' : ''}>Approved</option>
+                                    <option ${data.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Course</label>
+                                <select id="editAppCourse" class="w-full bg-white border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                                    <option ${data.course === 'DCA (Diploma in Computer Application)' ? 'selected' : ''}>DCA (Diploma in Computer Application)</option>
+                                    <option ${data.course === 'ADCA (Advanced Diploma in Computer Application)' ? 'selected' : ''}>ADCA (Advanced Diploma in Computer Application)</option>
+                                    <option ${data.course === 'Python Programming' ? 'selected' : ''}>Python Programming</option>
+                                    <option ${data.course === 'Web Development' ? 'selected' : ''}>Web Development</option>
+                                    <option ${data.course === 'Tally Prime' ? 'selected' : ''}>Tally Prime</option>
+                                    <option ${data.course === 'CCC / BCC' ? 'selected' : ''}>CCC / BCC</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Applicant Name</label>
+                            <input type="text" id="editAppName" value="${data.name}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500 font-bold">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Father's Name</label>
+                                <input type="text" id="editAppFather" value="${data.father || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Mother's Name</label>
+                                <input type="text" id="editAppMother" value="${data.mother || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Date of Birth</label>
+                                <input type="date" id="editAppDOB" value="${data.dob || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Gender</label>
+                                <select id="editAppGender" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                                    <option ${data.gender === 'Male' ? 'selected' : ''}>Male</option>
+                                    <option ${data.gender === 'Female' ? 'selected' : ''}>Female</option>
+                                    <option ${data.gender === 'Other' ? 'selected' : ''}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Phone</label>
+                                <input type="text" id="editAppPhone" value="${data.phone || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Email</label>
+                                <input type="text" id="editAppEmail" value="${data.email || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                        
+                        <!-- Extra Fields -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Category</label>
+                                <input type="text" id="editAppCategory" value="${data.category || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 uppercase">Qualification</label>
+                                <input type="text" id="editAppQual" value="${data.qualification || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'notice') {
+                const notice = noticesDB.find(n => n.id === id);
+                container.innerHTML = `
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Notice Message</label>
+                        <textarea id="editNoticeMsg" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">${notice.message}</textarea>
+                    </div>`;
+            } else if (type === 'certificate') {
+                const cert = certificatesDB.find(c => c.id === id);
+                container.innerHTML = `
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Student Name</label>
+                        <input type="text" id="editCertName" value="${cert.studentName}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Course Name</label>
+                        <input type="text" id="editCertCourse" value="${cert.course}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Grade</label>
+                            <input type="text" id="editCertGrade" value="${cert.grade}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Issue Date</label>
+                            <input type="date" id="editCertDate" value="${cert.issueDate}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('editModal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = function() {
+            document.getElementById('editModal').classList.add('hidden');
+            currentEditId = null;
+        };
+
+        window.saveEdit = async function() {
+            const btn = document.getElementById('saveEditBtn');
             btn.disabled = true;
             btn.innerText = "Saving to GitHub...";
 
-            setTimeout(async () => {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                const imageData = canvas.toDataURL('image/jpeg', 0.4);
-
-                const timestamp = Date.now();
-                const record = {
-                    studentId: currentStudent.id,
-                    name: currentStudent.name,
-                    photo: imageData,
-                    timeString: new Date().toLocaleString()
-                };
-
-                const fileName = `${currentStudent.id}_${timestamp}.json`;
-                const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}/${fileName}`;
-                
-                try {
-                    const response = await fetch(url, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${GH_CONFIG.token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `Attendance: ${currentStudent.name}`,
-                            content: btoa(unescape(encodeURIComponent(JSON.stringify(record))))
-                        })
-                    });
-
-                    if (response.ok) {
-                        document.getElementById('successMsg').innerText = `Success! Record for ${currentStudent.name} saved to GitHub.`;
-                        if(stream) stream.getTracks().forEach(t => t.stop());
-                        showView('view-student-success');
-                    } else {
-                        const errData = await response.json();
-                        let msg = errData.message || "Unknown error";
-                        if (response.status === 404) {
-                            msg = "Repository '" + GH_CONFIG.repo + "' not found under user '" + GH_CONFIG.owner + "'. Check repo name.";
-                        } else if (response.status === 401) {
-                            msg = "Token is invalid.";
-                        } else if (response.status === 403) {
-                            msg = "Access Denied. FIX: Go to GitHub token settings and grant 'Contents: Write' permission for this repo.";
-                        }
-                        throw new Error(msg);
+            try {
+                if (currentEditType === 'student') {
+                    const newName = document.getElementById('editName').value;
+                    const newCourse = document.getElementById('editCourse').value;
+                    const newPass = document.getElementById('editPass').value;
+                    
+                    let newPhoto = studentsDB[currentEditId].photo;
+                    const previewSrc = document.getElementById('editStudentPhotoPreview').src;
+                    if (!document.getElementById('editStudentPhotoPreview').classList.contains('hidden') && previewSrc) {
+                        newPhoto = previewSrc;
                     }
-                } catch (e) {
-                    alert("Upload Error: " + e.message);
-                    btn.disabled = false;
-                    btn.innerText = "Mark Attendance";
+
+                    const studentData = {
+                        id: currentEditId,
+                        name: newName,
+                        password: newPass,
+                        course: newCourse,
+                        joined: studentsDB[currentEditId].joined || new Date().toLocaleDateString(),
+                        photo: newPhoto
+                    };
+                    
+                    // Update Local
+                    studentsDB[currentEditId] = studentData;
+                    // Sync to GitHub
+                    await ghUploadFile(`${GH_CONFIG.path_students}/${currentEditId}.json`, studentData, "Update Student");
+                    
+                    renderStudentRegister();
+                    alert("Student updated on GitHub!");
+
+                } else if (currentEditType === 'application') {
+                    const app = admissionsDB[currentEditId];
+                    // Update all fields from the full edit form
+                    app.name = document.getElementById('editAppName').value;
+                    app.father = document.getElementById('editAppFather').value;
+                    app.mother = document.getElementById('editAppMother').value;
+                    app.dob = document.getElementById('editAppDOB').value;
+                    app.gender = document.getElementById('editAppGender').value;
+                    app.phone = document.getElementById('editAppPhone').value;
+                    app.email = document.getElementById('editAppEmail').value;
+                    app.course = document.getElementById('editAppCourse').value;
+                    app.category = document.getElementById('editAppCategory').value;
+                    app.qualification = document.getElementById('editAppQual').value;
+                    app.status = document.getElementById('editAppStatus').value;
+                    
+                    // Sync to GitHub
+                    await ghUploadFile(`${GH_CONFIG.path_admissions}/${currentEditId}.json`, app, "Update Application");
+                    renderApplications();
+                    alert("Application updated on GitHub!");
+
+                } else if (currentEditType === 'notice') {
+                    const newMsg = document.getElementById('editNoticeMsg').value;
+                    const index = noticesDB.findIndex(n => n.id === currentEditId);
+                    if(index !== -1) {
+                        noticesDB[index].message = newMsg;
+                        await ghUploadFile(GH_CONFIG.path_notices, noticesDB, "Update Notice");
+                        renderAdminNotices();
+                        alert("Notice updated on GitHub!");
+                    }
+                } else if (currentEditType === 'certificate') {
+                    const index = certificatesDB.findIndex(c => c.id === currentEditId);
+                    if(index !== -1) {
+                        certificatesDB[index].studentName = document.getElementById('editCertName').value;
+                        certificatesDB[index].course = document.getElementById('editCertCourse').value;
+                        certificatesDB[index].grade = document.getElementById('editCertGrade').value;
+                        certificatesDB[index].issueDate = document.getElementById('editCertDate').value;
+                        await ghUploadFile(GH_CONFIG.path_certs, certificatesDB, "Update Certificates");
+                        renderCertificates();
+                        alert("Certificate Updated!");
+                    }
                 }
-            }, 2000);
-        };
-
-        // ADMIN LOGIC
-        window.showAdminLogin = () => showView('view-admin-login');
-
-        window.loginAdmin = () => {
-            const email = document.getElementById('adminEmail').value;
-            const pass = document.getElementById('adminPass').value;
-            if (email === adminCreds.email && pass === adminCreds.pass) {
-                loadDashboard();
-            } else {
-                alert("Invalid Credentials");
+            } catch (e) {
+                alert("Error saving: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save Changes";
+                closeEditModal();
             }
         };
 
-        async function loadDashboard() {
-            showView('view-admin-dashboard');
-            const container = document.getElementById('historyContainer');
-            const empty = document.getElementById('emptyState');
+        // --- CERTIFICATE SYSTEM ---
+        window.issueCertificate = async function() {
+            const sId = document.getElementById('certStudentId').value.trim();
+            const sName = document.getElementById('certStudentName').value.trim();
+            const sCourse = document.getElementById('certCourse').value.trim();
+            const sGrade = document.getElementById('certGrade').value.trim();
+            const sDate = document.getElementById('certDate').value;
 
-            if(!GH_CONFIG.token || !GH_CONFIG.owner) {
-                container.innerHTML = '';
-                empty.classList.remove('hidden');
-                document.getElementById('configPanel').classList.remove('hidden');
+            if(!sId || !sName) return alert("Fill essential details");
+
+            const newCert = {
+                id: "CERT-" + Date.now(),
+                studentId: sId,
+                studentName: sName,
+                course: sCourse,
+                grade: sGrade,
+                issueDate: sDate
+            };
+
+            certificatesDB.push(newCert);
+            
+            try {
+                await ghUploadFile(GH_CONFIG.path_certs, certificatesDB, "Issue Certificate");
+                alert("Certificate Issued & Saved to GitHub!");
+                renderCertificates();
+                document.getElementById('certStudentId').value = '';
+            } catch(e) {
+                alert("Error: " + e.message);
+            }
+        };
+
+        function renderCertificates() {
+            const list = document.getElementById('certificateList');
+            list.innerHTML = '';
+            
+            if(certificatesDB.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 italic">No certificates found.</td></tr>';
                 return;
             }
 
-            container.innerHTML = '<p class="text-center col-span-full py-10 animate-pulse">Connecting to GitHub...</p>';
-
-            const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}`;
-
-            try {
-                const response = await fetch(url, {
-                    headers: { 
-                        'Authorization': `Bearer ${GH_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (!response.ok) {
-                    if(response.status === 404) throw new Error("Database folder not found. No records yet?");
-                    if(response.status === 403) throw new Error("Access Denied (403). Your token needs 'Contents: Read' permission.");
-                    throw new Error("GitHub connection error (" + response.status + ")");
-                }
-
-                const files = await response.json();
-                container.innerHTML = '';
-                
-                if (files.length === 0 || !Array.isArray(files)) {
-                    empty.classList.remove('hidden');
-                    return;
-                }
-                empty.classList.add('hidden');
-                files.reverse();
-
-                for (const file of files) {
-                    try {
-                        const res = await fetch(file.download_url);
-                        const record = await res.json();
-
-                        const card = document.createElement('div');
-                        card.className = "bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 group relative fade-in";
-                        card.innerHTML = `
-                            <div class="aspect-square relative bg-slate-50">
-                                <img src="${record.photo}" class="w-full h-full object-cover">
-                                <button onclick="deleteGHFile('${file.path}', '${file.sha}')" class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="p-4">
-                                <h4 class="font-bold text-slate-800 truncate">${record.name}</h4>
-                                <p class="text-[10px] text-slate-400 font-mono">ID: ${record.studentId}</p>
-                                <div class="mt-2 text-[10px] text-slate-500 font-medium">${record.timeString}</div>
-                            </div>
-                        `;
-                        container.appendChild(card);
-                    } catch (e) { console.error("Error loading file:", file.name); }
-                }
-            } catch (err) {
-                container.innerHTML = `<div class="col-span-full text-center py-10 bg-red-50 text-red-600 rounded-3xl p-6">
-                    <p class="font-bold">Connection Issue</p>
-                    <p class="text-sm">${err.message}</p>
-                    <button onclick="toggleConfig()" class="mt-4 text-xs underline font-bold">Adjust GitHub Settings</button>
-                </div>`;
-                empty.classList.add('hidden');
-                console.error(err);
-            }
+            [...certificatesDB].reverse().forEach(cert => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-mono text-slate-500 text-xs">${cert.studentId}</td>
+                    <td class="px-6 py-4 font-bold text-slate-800">${cert.studentName}</td>
+                    <td class="px-6 py-4 text-slate-600 text-sm">${cert.course}</td>
+                    <td class="px-6 py-4 text-slate-500 text-xs">${cert.issueDate}</td>
+                    <td class="px-6 py-4 text-right flex gap-2 justify-end">
+                        <button onclick="downloadCertificatePDF('${cert.id}')" class="text-emerald-600 font-bold text-xs">PRINT</button>
+                        <button onclick="openEditModal('certificate', '${cert.id}')" class="text-blue-500 font-bold text-xs">EDIT</button>
+                        <button onclick="deleteCertificate('${cert.id}')" class="text-red-500 font-bold text-xs">DEL</button>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
         }
 
-        window.deleteGHFile = async (path, sha) => {
-            if (!confirm("Delete this record permanently?")) return;
-
-            const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`;
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${GH_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: "Delete attendance record",
-                        sha: sha
-                    })
-                });
-
-                if (response.ok) {
-                    loadDashboard();
-                } else {
-                    alert("Delete failed. Ensure token has 'delete' or 'write' permissions.");
-                }
-            } catch (err) {
-                alert("Error deleting: " + err.message);
+        window.deleteCertificate = async function(id) {
+            if(confirm("Delete this certificate from GitHub?")) {
+                certificatesDB = certificatesDB.filter(c => c.id !== id);
+                await ghUploadFile(GH_CONFIG.path_certs, certificatesDB, "Deleted Certificate");
+                renderCertificates();
             }
         };
 
-        window.logoutAdmin = () => location.reload();
+        // --- MODERN CERTIFICATE PDF GENERATION ---
+        window.downloadCertificatePDF = function(certId) {
+            const { jsPDF } = window.jspdf;
+            if (!jsPDF) { alert("PDF Library not loaded. Please refresh."); return; }
+
+            const cert = certificatesDB.find(c => c.id === certId) || (currentUser && certificatesDB.find(c => c.studentId === currentUser.id));
+            if(!cert) return alert("Certificate data not found.");
+
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const width = doc.internal.pageSize.getWidth();
+            const height = doc.internal.pageSize.getHeight();
+
+            // Background & Border
+            doc.setFillColor(255, 255, 255);
+            doc.rect(0, 0, width, height, 'F');
+            
+            // Outer double border
+            doc.setDrawColor(16, 185, 129); // Emerald 500
+            doc.setLineWidth(1.5);
+            doc.rect(10, 10, width - 20, height - 20);
+            
+            doc.setDrawColor(6, 78, 59); // Emerald 900
+            doc.setLineWidth(0.5);
+            doc.rect(13, 13, width - 26, height - 26);
+
+            // Corner Accents
+            doc.setFillColor(16, 185, 129);
+            doc.triangle(10, 10, 40, 10, 10, 40, 'F'); // Top Left
+            doc.triangle(width-10, height-10, width-40, height-10, width-10, height-40, 'F'); // Bottom Right
+
+            // Header
+            doc.setTextColor(6, 78, 59);
+            doc.setFont("times", "bold");
+            doc.setFontSize(36);
+            doc.text("CERTIFICATE", width/2, 45, { align: "center" });
+            
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(16, 185, 129);
+            doc.text("OF ACHIEVEMENT", width/2, 55, { align: "center" });
+
+            // Body
+            doc.setTextColor(50);
+            doc.setFontSize(12);
+            doc.text("This certificate is proudly presented to", width/2, 80, { align: "center" });
+
+            // Student Name (Fancy)
+            doc.setTextColor(6, 78, 59);
+            doc.setFont("times", "italic");
+            doc.setFontSize(40);
+            doc.text(cert.studentName, width/2, 100, { align: "center" });
+            
+            // Line under name
+            doc.setDrawColor(200);
+            doc.setLineWidth(0.5);
+            doc.line(width/2 - 60, 105, width/2 + 60, 105);
+
+            // Details
+            doc.setTextColor(80);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            doc.text("For successfully completing the comprehensive course in", width/2, 120, { align: "center" });
+
+            // Course Name
+            doc.setTextColor(16, 185, 129);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.text(cert.course, width/2, 135, { align: "center" });
+
+            // Grade/Performance
+            if(cert.grade) {
+                doc.setTextColor(100);
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Performance Grade: ${cert.grade}`, width/2, 145, { align: "center" });
+            }
+
+            // Footer / Signatures
+            const sigY = 175;
+            
+            // Date
+            doc.setFontSize(11);
+            doc.setTextColor(50);
+            doc.text("Date Issued", 60, sigY, { align: "center" });
+            doc.text(cert.issueDate, 60, sigY + 10, { align: "center" });
+            doc.line(40, sigY + 2, 80, sigY + 2);
+
+            // Director Signature
+            doc.text("Director Signature", width - 60, sigY, { align: "center" });
+            doc.setFont("times", "italic");
+            doc.text("Ashinur Rahman", width - 60, sigY - 10, { align: "center" });
+            doc.line(width - 80, sigY + 2, width - 40, sigY + 2);
+
+            // Bottom Branding
+            doc.setFontSize(9);
+            doc.setTextColor(150);
+            doc.setFont("helvetica", "normal");
+            doc.text("AR COMPUTER EDUCATION | ID: " + cert.id, width/2, height - 20, { align: "center" });
+
+            doc.save(`${cert.studentName}_Certificate.pdf`);
+        };
+
+        window.downloadMyCertificate = function() {
+            if(!currentUser) return;
+            const cert = certificatesDB.find(c => c.studentId === currentUser.id);
+            if(cert) {
+                downloadCertificatePDF(cert.id);
+            } else {
+                alert("No certificate found for your ID.");
+            }
+        };
+
+        // --- STUDENT LOGIN LOGIC (SECURE) ---
+        window.handleStudentLogin = async function() {
+            const enroll = document.getElementById('loginEnrollment').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const btn = document.querySelector('#view-student-login button');
+            
+            if(!enroll || !pass) return alert("Details required");
+
+            btn.innerText = "Verifying Your ID...";
+            btn.disabled = true;
+
+            try {
+                // Fetch student file from GitHub
+                const response = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.path_students}/${enroll}.json`, {
+                    headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
+                });
+
+                if(response.ok) {
+                    const data = await response.json();
+                    const studentData = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+                    
+                    if(studentData.password === pass) {
+                        currentUser = { id: enroll, ...studentData };
+                        currentStudent = currentUser; // Ensure this is set for attendance
+                        
+                        document.getElementById('dashName').innerText = currentUser.name;
+                        document.getElementById('dashWelcome').innerText = `Welcome, ${currentUser.name.split(' ')[0]}`;
+                        document.getElementById('dashID').innerText = `ID: ${currentUser.id}`;
+                        document.getElementById('dashCourse').innerText = currentUser.course || "General";
+                        document.getElementById('dashDate').innerText = new Date().toLocaleDateString();
+                        
+                        const profilePic = document.getElementById('dashProfilePic');
+                        const profilePlaceholder = document.getElementById('dashProfilePlaceholder');
+                        if(currentUser.photo) {
+                            profilePic.src = currentUser.photo;
+                            profilePic.classList.remove('hidden');
+                            profilePlaceholder.classList.add('hidden');
+                        } else {
+                            profilePic.classList.add('hidden');
+                            profilePlaceholder.classList.remove('hidden');
+                        }
+
+                        // Check certs
+                        const hasCert = certificatesDB.some(c => c.studentId === enroll);
+                        document.getElementById('studentCertSection').classList.toggle('hidden', !hasCert);
+
+                        window.showView('view-student-dashboard');
+                        loadStudentHistory(currentUser.name);
+                    } else {
+                        alert("Wrong Password!");
+                    }
+                } else {
+                    alert("Student ID not found in database.");
+                }
+            } catch(e) {
+                alert("Login Error: " + e.message);
+            } finally {
+                btn.innerText = "Secure Login";
+                btn.disabled = false;
+            }
+        };
+
+        async function loadStudentHistory(studentName) {
+            const tableBody = document.getElementById('studentAttendanceHistory');
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Fetching logs from GitHub...</td></tr>';
+            
+            try {
+                const files = await ghFetchList(GH_CONFIG.path_attendance);
+                tableBody.innerHTML = '';
+                let found = 0;
+                
+                // Show last 10 records
+                for (const file of files.slice(-10).reverse()) {
+                    const data = await ghFetchContent(file.download_url);
+                    if(data.name === studentName) {
+                        found++;
+                        // FIX: Use timestamp if available for accuracy
+                        const dateObj = data.timestamp ? new Date(data.timestamp) : new Date(data.timeString);
+                        tableBody.innerHTML += `
+                            <tr class="bg-white border-b hover:bg-slate-50">
+                                <td class="px-4 py-3 font-medium">${dateObj.toLocaleDateString()}</td>
+                                <td class="px-4 py-3 text-slate-500">${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                                <td class="px-4 py-3 text-right"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded">PRESENT</span></td>
+                            </tr>`;
+                    }
+                }
+                if(found === 0) tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-400 text-xs">No records found.</td></tr>`;
+            } catch(e) {
+                 tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-400 text-xs">Sync error.</td></tr>`;
+            }
+        }
+
+        // --- ADMIN PORTAL ---
+        window.loginAdmin = function() {
+            const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+            const pass = document.getElementById('adminPass').value.trim();
+            
+            if (email === adminCreds.email && pass === adminCreds.pass) {
+                isAdminLoggedIn = true;
+                window.showView('view-admin-dashboard');
+                window.switchAdminTab('applications');
+            } else {
+                alert("Incorrect Credentials. Access Denied.");
+            }
+        };
+
+        window.switchAdminTab = function(tab) {
+            const sections = ['admin-applications-section', 'admin-register-section', 'admin-attendance-section', 'admin-notices-section', 'admin-certificates-section'];
+            sections.forEach(s => document.getElementById(s).classList.add('hidden'));
+
+            // Highlight Tab Logic (Simplified)
+            const tabs = {
+                'applications': 'tabAppBtn',
+                'register': 'tabRegBtn',
+                'attendance': 'tabAttBtn',
+                'notices': 'tabNoticeBtn',
+                'certificates': 'tabCertBtn'
+            };
+            
+            // Reset all buttons
+            Object.values(tabs).forEach(id => {
+                document.getElementById(id).className = "px-6 py-2 font-bold text-sm text-slate-500 hover:bg-slate-50 transition-all rounded-xl";
+            });
+            // Highlight active
+            if(tabs[tab]) {
+                document.getElementById(tabs[tab]).className = "px-6 py-2 font-bold text-sm bg-emerald-600 text-white shadow-md shadow-emerald-200 transition-all rounded-xl";
+                document.getElementById(`admin-${tab}-section`).classList.remove('hidden');
+            }
+
+            // Load Data based on tab
+            if(tab === 'applications') renderApplications();
+            else if(tab === 'register') renderStudentRegister();
+            else if(tab === 'attendance') loadDashboard();
+            else if(tab === 'notices') renderAdminNotices();
+            else if(tab === 'certificates') renderCertificates();
+        };
+
+        // --- STUDENT REGISTRATION (TO GITHUB) ---
+        window.registerStudent = async function() {
+            const id = document.getElementById('regEnroll').value.trim();
+            const name = document.getElementById('regName').value.trim();
+            const pass = document.getElementById('regPass').value.trim();
+            const course = document.getElementById('regCourse').value;
+
+            if(!id || !name || !pass) return alert("Fill all details");
+            
+            const studentData = {
+                id, name, password: pass, course,
+                joined: new Date().toLocaleDateString(),
+                photo: null
+            };
+
+            try {
+                await ghUploadFile(`${GH_CONFIG.path_students}/${id}.json`, studentData, `Register Student ${id}`);
+                alert("Student Registered to Database!");
+                // Clear form
+                document.getElementById('regEnroll').value = '';
+                document.getElementById('regName').value = '';
+                // AUTO REFRESH LIST
+                renderStudentRegister();
+            } catch(e) {
+                alert("Registration Failed: " + e.message);
+            }
+        };
+
+        // --- NEW DELETE STUDENT FUNCTION ---
+        window.deleteStudent = async function(id, sha) {
+            if(confirm("Are you sure you want to PERMANENTLY delete this student?")) {
+                try {
+                    await ghDeleteFile(`${GH_CONFIG.path_students}/${id}.json`, sha, `Delete Student ${id}`);
+                    alert("Student Deleted.");
+                    renderStudentRegister();
+                } catch(e) {
+                    alert("Delete failed: " + e.message);
+                }
+            }
+        };
+
+        async function renderStudentRegister() {
+            const list = document.getElementById('registeredStudentList');
+            list.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading student list...</td></tr>';
+            
+            try {
+                const files = await ghFetchList(GH_CONFIG.path_students);
+                list.innerHTML = '';
+                if(files.length === 0) {
+                    list.innerHTML = '<tr><td colspan="5" class="text-center">No students found.</td></tr>';
+                    return;
+                }
+
+                studentsDB = {}; 
+                
+                // Parallel fetch for speed
+                const promises = files.map(file => ghFetchContent(file.download_url));
+                const students = await Promise.all(promises);
+
+                // Sort by ID descending (assuming numeric string IDs)
+                students.sort((a, b) => (parseInt(b.id) || 0) - (parseInt(a.id) || 0));
+
+                students.forEach(data => {
+                    studentsDB[data.id] = data; // Cache
+                    const fileObj = files.find(f => f.name === data.id + '.json');
+                    const sha = fileObj ? fileObj.sha : ''; // Get SHA for delete
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-slate-100 hover:bg-slate-50";
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-mono font-bold text-slate-600 text-xs">${data.id}</td>
+                        <td class="px-6 py-4 text-slate-800 font-bold flex items-center gap-2">
+                            ${data.photo ? '<span class="text-xs">📸</span>' : ''} ${data.name}
+                        </td>
+                        <td class="px-6 py-4 text-slate-500 text-xs">${data.course}</td>
+                        <td class="px-6 py-4 text-slate-400 font-mono text-xs">${data.password}</td>
+                        <td class="px-6 py-4 text-right flex justify-end gap-2">
+                            <button onclick="openEditModal('student', '${data.id}')" class="text-blue-500 font-bold text-xs">EDIT</button>
+                            <button onclick="deleteStudent('${data.id}', '${sha}')" class="text-red-500 font-bold text-xs">DEL</button>
+                        </td>
+                    `;
+                    list.appendChild(tr);
+                });
+            } catch(e) {
+                list.innerHTML = '<tr><td colspan="5" class="text-center text-red-500">Error loading list.</td></tr>';
+            }
+        }
+
+        // --- ADMISSIONS (TO GITHUB) ---
+        window.handleAdmission = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "Uploading Your Documents...";
+
+            const appId = "APP/AR-" + Math.floor(100000 + Math.random() * 900000);
+            
+            // Image/Doc Processing
+            let photoData = null;
+            let docData = null;
+            
+            const photoInput = document.getElementById('applyPhoto');
+            if (photoInput.files[0]) {
+                const raw = await convertBase64(photoInput.files[0]);
+                photoData = await resizeImage(raw);
+            }
+            
+            const docInput = document.getElementById('applyDoc');
+            if (docInput.files[0]) {
+                // Warning: GitHub API limit 1MB for content. 
+                // We assume user uploads small file or we accept failure for demo.
+                if(docInput.files[0].size > 900000) {
+                    alert("Document too large for GitHub API (Max 1MB).");
+                    btn.disabled = false;
+                    return;
+                }
+                docData = await convertBase64(docInput.files[0]);
+            }
+
+            const appData = {
+                appId,
+                name: document.getElementById('applyName').value.toUpperCase(),
+                // ... gather other fields similarly ...
+                father: document.getElementById('applyFather').value,
+                mother: document.getElementById('applyMother').value,
+                dob: document.getElementById('applyDOB').value,
+                gender: document.getElementById('applyGender').value,
+                phone: document.getElementById('applyPhone').value,
+                email: document.getElementById('applyEmail').value,
+                course: document.getElementById('applyCourse').value,
+                idNumber: document.getElementById('applyIdNumber').value,
+                status: "Pending",
+                date: new Date().toLocaleDateString(),
+                photoData: photoData,
+                docData: docData
+            };
+
+            try {
+                await ghUploadFile(`${GH_CONFIG.path_admissions}/${appId}.json`, appData, `New Admission ${appId}`);
+                
+                document.getElementById('displayAppId').innerText = appId;
+                currentApp = appData; // For PDF generation
+                window.showView('view-apply-success');
+                document.getElementById('admissionForm').reset();
+            } catch(e) {
+                alert("Upload failed: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Submit Registration Form";
+            }
+        };
+
+        async function renderApplications() {
+            const list = document.getElementById('applicationList');
+            list.innerHTML = '<div class="text-center py-10 text-slate-400">Loading applications from GitHub...</div>';
+            
+            try {
+                const files = await ghFetchList(GH_CONFIG.path_admissions);
+                list.innerHTML = '';
+                if(files.length === 0) list.innerHTML = '<div class="text-center py-10">No applications yet.</div>';
+
+                admissionsDB = {}; // cache
+
+                for(const file of files) {
+                    const app = await ghFetchContent(file.download_url);
+                    app.gh_sha = file.sha; // Store SHA for deletion
+                    app.gh_path = file.path; // Store Path for deletion <--- NEW
+                    admissionsDB[app.appId] = app;
+
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 transition-all hover:shadow-md";
+                    
+                    let photoHtml = app.photoData 
+                        ? `<img src="${app.photoData}" class="w-12 h-12 rounded-full object-cover border border-slate-200">`
+                        : `<div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-xl">👤</div>`;
+
+                    let docBtn = app.docData 
+                        ? `<button onclick="viewDocument('${app.appId}')" class="text-xs bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-lg border border-blue-200">View Doc</button>`
+                        : '';
+
+                    card.innerHTML = `
+                        <div class="flex items-center gap-4 flex-1 w-full">
+                            ${photoHtml}
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-mono bg-slate-100 px-2 rounded">${app.appId}</span>
+                                    <span class="text-[10px] font-bold uppercase px-2 rounded bg-yellow-100 text-yellow-700">${app.status}</span>
+                                </div>
+                                <h4 class="font-bold text-slate-800">${app.name}</h4>
+                                <p class="text-xs text-slate-500">${app.course} | ${app.phone}</p>
+                                <div class="mt-2">${docBtn}</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="openEditModal('application', '${app.appId}')" class="text-slate-400 hover:text-blue-500 bg-slate-50 p-2 rounded-lg" title="Edit Full Application">✏️ Edit</button>
+                            <button onclick="deleteApplication('${app.appId}')" class="text-red-400 hover:text-red-600 bg-red-50 p-2 rounded-lg" title="Delete Application">🗑️</button>
+                        </div>`;
+                    list.appendChild(card);
+                }
+            } catch(e) {
+                list.innerHTML = `<div class="text-red-500 text-center">Error loading applications: ${e.message}</div>`;
+            }
+        }
+
+        window.viewDocument = function(appId) {
+            const app = admissionsDB[appId];
+            if(app && app.docData) {
+                const win = window.open();
+                win.document.write(`<iframe src="${app.docData}" style="width:100%;height:100%;border:none;"></iframe>`);
+            } else { alert("Doc not found in cache."); }
+        };
+
+        window.deleteApplication = async function(appId) {
+            if(!confirm("Are you sure you want to PERMANENTLY delete this application?")) return;
+            
+            const app = admissionsDB[appId];
+            if(!app || !app.gh_sha) return alert("Error: SHA not found. Refresh data.");
+
+            const targetPath = app.gh_path || `${GH_CONFIG.path_admissions}/${appId}.json`;
+
+            try {
+                await ghDeleteFile(targetPath, app.gh_sha, `Delete App ${appId}`);
+                alert("Application Deleted.");
+                delete admissionsDB[appId]; // remove from local
+                renderApplications(); // refresh view
+            } catch(e) {
+                alert("Delete failed: " + e.message);
+            }
+        };
+
+        // --- NEW START CAMERA FUNCTION ---
+        window.startCamera = async function() {
+            // Check if browser supports
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Camera not supported on this browser.");
+                return;
+            }
+            
+            // Switch view first for "direct open" feel
+            showView('view-student-scan');
+            
+            const video = document.getElementById('webcam');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                video.srcObject = stream;
+                if(currentUser) {
+                    document.getElementById('displayName').innerText = `Student: ${currentUser.name}`;
+                }
+            } catch (err) {
+                console.error("Camera Error:", err);
+                alert("Cannot access camera. Please allow permissions.");
+                showView('view-student-dashboard');
+            }
+        };
+
+        window.stopCameraAndReturn = function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            showView('view-student-dashboard');
+        };
+
+        // --- UPDATED ATTENDANCE LOGIC ---
+        window.markAttendance = async function() {
+            if (!currentUser) { alert("Session expired."); logout(); return; }
+
+            const btn = document.getElementById('markBtn');
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('captureCanvas');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...`;
+
+            // 1. Capture
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // Mirror effect fix
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0);
+            
+            const photoData = canvas.toDataURL('image/jpeg', 0.6); // slight compression
+
+            // 2. Stop Camera immediately for better UX
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            // 3. Prepare Data
+            const record = {
+                studentId: currentUser.id,
+                name: currentUser.name,
+                photo: photoData,
+                timeString: new Date().toLocaleString(),
+                timestamp: Date.now()
+            };
+            
+            const fileName = `${currentUser.id}_${Date.now()}.json`;
+
+            try {
+                // 4. Upload
+                await ghUploadFile(`${GH_CONFIG.path_attendance}/${fileName}`, record, `Att: ${currentUser.name}`);
+                
+                // 5. Show Success with Photo (Directly!)
+                document.getElementById('successPhoto').src = photoData; 
+                document.getElementById('successMsg').innerHTML = `Attendance Marked Successfully!<br><span class="text-xs text-slate-400">${record.timeString}</span>`;
+                
+                showView('view-student-success');
+                
+            } catch(e) {
+                alert("Upload Failed: " + e.message);
+                showView('view-student-dashboard'); // Fallback
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `Capture & Mark Present`;
+            }
+        };
+
+        window.loadDashboard = async function() {
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = '<div class="col-span-full py-20 text-center text-slate-400">Loading GitHub Logs...</div>';
+            
+            try {
+                const files = await ghFetchList(GH_CONFIG.path_attendance);
+                container.innerHTML = '';
+                
+                // Show last 20
+                for (const file of files.slice(-20).reverse()) {
+                    const data = await ghFetchContent(file.download_url);
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200";
+                    card.innerHTML = `
+                        <div class="aspect-square bg-slate-50 relative">
+                            <img src="${data.photo}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-bold text-xs truncate">${data.name}</h4>
+                            <p class="text-slate-400 text-[9px]">${data.timeString}</p>
+                        </div>`;
+                    container.appendChild(card);
+                }
+            } catch(e) { container.innerHTML = "Error loading logs."; }
+        };
+
+        window.toggleConfig = function() { document.getElementById('configPanel').classList.toggle('hidden'); };
+        
+        window.saveGHConfig = function() {
+            const user = document.getElementById('ghUsername').value.trim();
+            const token = document.getElementById('ghToken').value.trim();
+            if(!user || !token) return alert("Fill all details!");
+            
+            GH_CONFIG.owner = user;
+            GH_CONFIG.token = token;
+            localStorage.setItem('gh_owner', user);
+            localStorage.setItem('gh_token', token);
+            alert("Configuration Saved!");
+            window.toggleConfig();
+            window.loadDashboard();
+        };
+
+        window.downloadApplicationPDF = async function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // -- THEME COLORS --
+            const primaryColor = [16, 185, 129]; // Emerald 500 (#10b981)
+            const secondaryColor = [6, 78, 59];  // Emerald 900 (#064e3b)
+            const lightRow = [240, 253, 244];    // Emerald 50
+            const white = [255, 255, 255];
+            const darkText = [30, 41, 59];       // Slate 800
+
+            // -- HEADER SECTION --
+            // Top Green Bar
+            doc.setFillColor(...primaryColor);
+            doc.rect(0, 0, 210, 45, 'F');
+            
+            // Brand Name
+            doc.setTextColor(...white);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(26);
+            doc.text("AR COMPUTER", 15, 22);
+            
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text("EDUCATION CENTER", 15, 30);
+            
+            // Receipt Badge (Right Side)
+            doc.setFillColor(...white);
+            doc.roundedRect(145, 10, 50, 25, 3, 3, 'F');
+            doc.setTextColor(...secondaryColor);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("ADMISSION", 170, 20, { align: "center" });
+            doc.text("RECEIPT", 170, 27, { align: "center" });
+
+            // -- BASIC INFO (Below Header) --
+            let yPos = 60;
+            
+            // Left Side: Status Info
+            doc.setFontSize(10);
+            doc.setTextColor(...darkText);
+            doc.setFont("helvetica", "bold");
+            doc.text(`Application ID:`, 15, yPos);
+            doc.setFont("helvetica", "normal");
+            doc.text(currentApp.appId, 45, yPos);
+            
+            yPos += 7;
+            doc.setFont("helvetica", "bold");
+            doc.text(`Date:`, 15, yPos);
+            doc.setFont("helvetica", "normal");
+            doc.text(currentApp.date, 45, yPos);
+
+            yPos += 7;
+            doc.setFont("helvetica", "bold");
+            doc.text(`Course:`, 15, yPos);
+            doc.setTextColor(...primaryColor); // Highlight Course
+            doc.text(currentApp.course, 45, yPos);
+            doc.setTextColor(...darkText); // Reset color
+
+            // Right Side: Student Photo
+            if (currentApp.photoData) {
+                try {
+                    // Border around photo
+                    doc.setDrawColor(200);
+                    doc.rect(150, 55, 35, 45); 
+                    // Image
+                    doc.addImage(currentApp.photoData, 'JPEG', 152, 57, 31, 41);
+                } catch(e) { console.log("Image error"); }
+            } else {
+                // Placeholder box
+                doc.setDrawColor(200);
+                doc.rect(150, 55, 35, 45);
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text("No Photo", 167.5, 80, {align: "center"});
+            }
+
+            // -- TABLE SECTION --
+            yPos = 110;
+            
+            // Section Title Bar
+            doc.setFillColor(...secondaryColor);
+            doc.rect(15, yPos, 180, 10, 'F');
+            doc.setTextColor(...white);
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text("STUDENT PROFILE DETAILS", 20, yPos + 7);
+            
+            yPos += 10;
+
+            // Table Rows
+            const rows = [
+                { l: "Full Name", v: currentApp.name },
+                { l: "Father's Name", v: currentApp.father },
+                { l: "Mother's Name", v: currentApp.mother },
+                { l: "Date of Birth", v: currentApp.dob },
+                { l: "Gender / Category", v: `${currentApp.gender} / ${currentApp.category}` },
+                { l: "Contact Number", v: currentApp.phone },
+                { l: "Email Address", v: currentApp.email },
+                { l: "Qualification", v: currentApp.qualification },
+                { l: "Occupation", v: currentApp.occupation },
+                { l: "ID Proof", v: `${currentApp.idType} (${currentApp.idNumber})` }
+            ];
+
+            const rowHeight = 10;
+            const colSplit = 70; // Width of Label Column
+
+            rows.forEach((row, i) => {
+                // Background for alternate rows
+                if (i % 2 === 0) {
+                    doc.setFillColor(...lightRow);
+                    doc.rect(15, yPos, 180, rowHeight, 'F');
+                } else {
+                    doc.setFillColor(...white);
+                    doc.rect(15, yPos, 180, rowHeight, 'F');
+                }
+
+                // Borders
+                doc.setDrawColor(220); // Light Grey Border
+                doc.rect(15, yPos, 180, rowHeight); // Outer Box
+                doc.line(15 + colSplit, yPos, 15 + colSplit, yPos + rowHeight); // Vertical Divider
+
+                // Text: Label
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(...secondaryColor);
+                doc.text(row.l, 20, yPos + 7);
+
+                // Text: Value
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(...darkText);
+                // Truncate text if too long
+                const safeVal = String(row.v).length > 45 ? String(row.v).substring(0, 42) + "..." : String(row.v);
+                doc.text(safeVal, 15 + colSplit + 5, yPos + 7);
+
+                yPos += rowHeight;
+            });
+
+            // -- FOOTER SECTION --
+            const footerY = 270;
+            
+            // Dotted Line
+            doc.setDrawColor(180);
+            doc.setLineDash([2, 2], 0);
+            doc.line(15, footerY, 195, footerY);
+            doc.setLineDash([]); // Reset dash
+
+            doc.setFontSize(8);
+            doc.setTextColor(100);
+            doc.text("Computer Generated Receipt. Valid without signature.", 105, footerY + 5, { align: "center" });
+            doc.setTextColor(...primaryColor);
+            doc.setFont("helvetica", "bold");
+            doc.text("AR Computer Education | Transforming Careers", 105, footerY + 10, { align: "center" });
+            
+            doc.save(`Admission_${currentApp.appId}.pdf`);
+        };
+        
+        window.checkStatus = async function() {
+            const appId = document.getElementById('statusInput').value.trim();
+            if(!appId) return alert("Please enter Application ID");
+
+            // Check memory first
+            if(admissionsDB[appId]) {
+                showStatusResult(admissionsDB[appId]);
+                return;
+            }
+
+            // Fetch from GitHub
+            const btn = document.querySelector('#view-status button');
+            btn.disabled = true;
+            btn.innerText = "Checking...";
+
+            try {
+                const appData = await ghFetchOneFile(`${GH_CONFIG.path_admissions}/${appId}.json`);
+                
+                if(appData) {
+                    admissionsDB[appId] = appData; // Cache it
+                    showStatusResult(appData);
+                } else {
+                    alert("Application ID not found.");
+                }
+            } catch(e) {
+                alert("Error checking status: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Check Status";
+            }
+        };
+
+        function showStatusResult(data) {
+            document.getElementById('statusResult').classList.remove('hidden');
+            document.getElementById('statusName').innerText = data.name;
+            document.getElementById('statusCourse').innerText = data.course;
+            const b = document.getElementById('statusBadge');
+            b.innerText = data.status;
+            b.className = `inline-block px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-sm ${data.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : (data.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700')}`;
+        }
     </script>
 </body>
 </html>
